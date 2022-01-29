@@ -49,6 +49,10 @@ function CreateNewGame()
     StorePlayerName(_player2Label, nameOfPlayer2);
     StoreTargetScore(targetScoreString);
     StoreGameState(_gameStateInProgress);
+    StoreFoulCountOfPlayer(_player1Label, 0);
+    StoreFoulCountOfPlayer(_player2Label, 0);
+    StoreTakeOfPlayer(_player1Label, 1);
+    StoreTakeOfPlayer(_player2Label, 0);
     ReloadStoredState();
     SetElementVisibilityDependingOnGameState();
 }
@@ -77,13 +81,8 @@ function ReloadStoredState()
     SetInnerHtmlById("player2_name", GetStoredPlayerName(_player2Label));
     SetPlayerScoreValuesToStoredValues();
 
-    SetInnerHtmlById("player1_take", "A: 0");
-    SetInnerHtmlById("player2_take", "A: 0");
-    SetInnerHtmlById("player1_average", "Ø: 0,0");
-    SetInnerHtmlById("player2_average", "Ø: 0,0");
-    SetInnerHtmlById("player1_highest", "H: 0");
-    SetInnerHtmlById("player2_highest", "H: 0");
-    SetRemainingBallsOfPlayers();
+    UpdateTakeDisplayToStoredValues();
+    UpdateDetails();
 
     SetRemainingBallsDisplayValue(GetStoredAmountOfRemainingBallsOnTable());
     SetActivePlayer(GetActivePlayer());
@@ -93,25 +92,51 @@ function ResetGame()
 {
     SetCurrentScoreOfPlayer(_player1Label, 0);
     SetCurrentScoreOfPlayer(_player2Label, 0);
+    SetPreviousScoreOfPlayer(_player1Label, 0);
+    SetPreviousScoreOfPlayer(_player2Label, 0);
+    SetHighestSeriesOfPlayer(_player1Label, 0);
+    SetHighestSeriesOfPlayer(_player2Label, 0);
     SetActivePlayer(_player1Label);
     StoreAmountOfRemainingBallsOnTable(15);
 }
 
 function SetRemainingBallsDisplayValue(value)
 {
-    document.querySelector("#remaining_balls_display").innerHTML = "" + value;
+    SetInnerHtmlById("remaining_balls_display", "" + value);
 }
 
 function SwitchPlayer()
 {
     const activePlayer = GetActivePlayer();
-    if(activePlayer === _player1Label)
-    {
-        SetActivePlayer(_player2Label);
-        return;
-    }
+    const nextPlayer = activePlayer === _player1Label ? _player2Label : _player1Label;
 
-    SetActivePlayer(_player1Label);
+    UpdateHighestSeriesIfNecessary(activePlayer);
+    SetPreviousScoreOfPlayer(activePlayer, GetCurrentScoreOfPlayer(activePlayer));
+    SetActivePlayer(nextPlayer);
+    const takeOfPlayer = GetStoredTakeOfPlayer(nextPlayer);
+    StoreTakeOfPlayer(nextPlayer, takeOfPlayer + 1);
+    UpdateTakeDisplayToStoredValues();
+    SetInnerHtmlById("series_counter", "Serie: 0");
+    UpdateHighestSeriesOfPlayersDisplayValues();
+}
+
+function UpdateHighestSeriesIfNecessary(playerLabel)
+{
+    const previousScore = GetPreviousScoreOfPlayer(playerLabel);
+    const currentScore = GetCurrentScoreOfPlayer(playerLabel);
+    const highestSeriesBefore = GetHighestSeriesOfPlayer(playerLabel);
+    const currentSeries = currentScore - previousScore;
+
+    if(currentSeries > highestSeriesBefore)
+    {
+        SetHighestSeriesOfPlayer(playerLabel, currentSeries);
+    }
+}
+
+function UpdateTakeDisplayToStoredValues()
+{
+    SetInnerHtmlById("player1_take", "A: " + GetStoredTakeOfPlayer(_player1Label));
+    SetInnerHtmlById("player2_take", "A: " + GetStoredTakeOfPlayer(_player2Label));
 }
 
 function SetActivePlayer(playerLabel)
@@ -170,6 +195,11 @@ function SetVisibilityOfRemainingBallsDialog(isVisible)
 
 function ChangePlayerScore(playerLabel, delta)
 {
+    if(delta > 0)
+    {
+        StoreFoulCountOfPlayer(playerLabel, 0);
+    }
+
     let playerScore = GetCurrentScoreOfPlayer(playerLabel);
     playerScore += delta;
     SetCurrentScoreOfPlayer(playerLabel, playerScore);
@@ -178,8 +208,8 @@ function ChangePlayerScore(playerLabel, delta)
 
 function SetPlayerScoreValuesToStoredValues()
 {
-    document.querySelector("#player1_score").innerHTML = GetCurrentScoreOfPlayer(_player1Label);
-    document.querySelector("#player2_score").innerHTML = GetCurrentScoreOfPlayer(_player2Label);
+    SetInnerHtmlById("player1_score", GetCurrentScoreOfPlayer(_player1Label));
+    SetInnerHtmlById("player2_score", GetCurrentScoreOfPlayer(_player2Label));
 }
 
 function Undo()
@@ -218,7 +248,32 @@ function ChangeAmountOfRemainingBalls(delta)
 
 function Foul()
 {
-    //TODO implement
+    const activePlayer = GetActivePlayer();
+    const currentScore = GetCurrentScoreOfPlayer(activePlayer);
+    const takeOfPlayer = GetStoredTakeOfPlayer(activePlayer);
+    let foulCount = GetStoredFoulCountOfPlayer(activePlayer);
+    foulCount++;
+
+    let negativePoints = -1;
+
+    if(takeOfPlayer === 1)
+    {
+        if(confirm("Wenn es sich um ein Foul beim Break handelt bestätigen Sie mit Ok."))
+        {
+            negativePoints = -2;
+        }
+    }    
+
+    if(foulCount % 3 === 0)
+    {
+        negativePoints = -16;
+    }
+
+    StoreFoulCountOfPlayer(activePlayer, foulCount);
+    SetCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
+    SetPlayerScoreValuesToStoredValues();
+    UpdateDetails();
+    SwitchPlayer();
 }
 
 function SetVisibilityOfDetailsDialog(isVisible)
@@ -228,21 +283,46 @@ function SetVisibilityOfDetailsDialog(isVisible)
 
 function UpdateDetails()
 {
-    SetRemainingBallsOfPlayers();
-}
-
-function SetRemainingBallsOfPlayers()
-{
     const targetScore = GetStoredTargetScore();
     const scoreOfPlayer1 = GetCurrentScoreOfPlayer(_player1Label);
     const scoreOfPlayer2 = GetCurrentScoreOfPlayer(_player2Label);
+    const previousScoreOfPlayer1 = GetPreviousScoreOfPlayer(_player1Label);
+    const previousScoreOfPlayer2 = GetPreviousScoreOfPlayer(_player2Label);
+    const takeOfPlayer1 = GetStoredTakeOfPlayer(_player1Label);
+    const takeOfPlayer2 = GetStoredTakeOfPlayer(_player2Label);
+
     const remainingBallsOfPlayer1 = Math.max(0, targetScore - scoreOfPlayer1);
     const remainingBallsOfPlayer2 = Math.max(0, targetScore - scoreOfPlayer2);
+    const averageOfPlayer1 = scoreOfPlayer1 / Math.max(takeOfPlayer1, 1);
+    const averageOfPlayer2 = scoreOfPlayer2 / Math.max(takeOfPlayer2, 1);
 
-    document.querySelector("#player1_remaining").innerHTML = "R: " + remainingBallsOfPlayer1;
-    document.querySelector("#player2_remaining").innerHTML = "R: " + remainingBallsOfPlayer2;
+    SetInnerHtmlById("player1_remaining", "R: " + remainingBallsOfPlayer1);
+    SetInnerHtmlById("player2_remaining", "R: " + remainingBallsOfPlayer2);
+
+    SetInnerHtmlById("player1_average", "Ø: " + averageOfPlayer1.toFixed(2));
+    SetInnerHtmlById("player2_average", "Ø: " + averageOfPlayer2.toFixed(2));
+
+    UpdateHighestSeriesOfPlayersDisplayValues();
+
+    let series = 0;
+    if(GetActivePlayer() === _player1Label){
+        series = scoreOfPlayer1 - previousScoreOfPlayer1;
+    }else{
+        series = scoreOfPlayer2 - previousScoreOfPlayer2;
+    }
+
+    SetInnerHtmlById("series_counter", "Serie: " + series);
 
     CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
+}
+
+function UpdateHighestSeriesOfPlayersDisplayValues()
+{
+    const highestSeriesOfPlayer1 = GetHighestSeriesOfPlayer(_player1Label);
+    const highestSeriesOfPlayer2 = GetHighestSeriesOfPlayer(_player2Label);
+
+    SetInnerHtmlById("player1_highest", "H: " + highestSeriesOfPlayer1);
+    SetInnerHtmlById("player2_highest", "H: " + highestSeriesOfPlayer2);
 }
 
 function CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2)
