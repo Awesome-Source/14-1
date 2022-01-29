@@ -6,7 +6,9 @@
 
   html,body{
 	width: 100vw;
+	width: -webkit-fill-available;
 	height: 100vh;
+	height: -webkit-fill-available;
   }
 
   .fill-area{
