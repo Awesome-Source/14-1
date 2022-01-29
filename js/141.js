@@ -77,6 +77,11 @@ function ReloadStoredState()
 {
     SetElementVisibilityDependingOnGameState();
 
+    if(!IsGameInProgress())
+    {
+        return;
+    }
+
     SetInnerHtmlById("player1_name", GetStoredPlayerName(_player1Label));
     SetInnerHtmlById("player2_name", GetStoredPlayerName(_player2Label));
     SetPlayerScoreValuesToStoredValues();
