@@ -152,6 +152,11 @@ function SetRemainingBalls(remainingBalls)
     const delta = remainingBallsBefore - remainingBalls;
     ChangePlayerScore(GetActivePlayer(), delta);
     
+    if(remainingBalls === 1 || remainingBalls === 0)
+    {
+        remainingBalls = 15;
+    }
+
     StoreAmountOfRemainingBallsOnTable(remainingBalls);
     SetRemainingBallsDisplayValue(remainingBalls);
     UpdateDetails();
@@ -184,13 +189,30 @@ function Undo()
 
 function NewRack()
 {
-    //TODO implement
+    ChangePlayerScore(GetActivePlayer(), 14);
+    UpdateDetails();
+}
+
+function IncrementOne()
+{
+    ChangeAmountOfRemainingBalls(1);
+}
+
+function DecrementOne()
+{
+    ChangeAmountOfRemainingBalls(-1);
 }
 
 function ChangeAmountOfRemainingBalls(delta)
 {
     const remainingBallsBefore = GetStoredAmountOfRemainingBallsOnTable();
     const remainingBalls = remainingBallsBefore + delta;
+
+    if(remainingBalls > 15)
+    {
+        return;
+    }
+
     SetRemainingBalls(remainingBalls);    
 }
 
@@ -214,11 +236,28 @@ function SetRemainingBallsOfPlayers()
     const targetScore = GetStoredTargetScore();
     const scoreOfPlayer1 = GetCurrentScoreOfPlayer(_player1Label);
     const scoreOfPlayer2 = GetCurrentScoreOfPlayer(_player2Label);
-    const remainingBallsOfPlayer1 = targetScore - scoreOfPlayer1;
-    const remainingBallsOfPlayer2 = targetScore - scoreOfPlayer2;
+    const remainingBallsOfPlayer1 = Math.max(0, targetScore - scoreOfPlayer1);
+    const remainingBallsOfPlayer2 = Math.max(0, targetScore - scoreOfPlayer2);
 
     document.querySelector("#player1_remaining").innerHTML = "R: " + remainingBallsOfPlayer1;
     document.querySelector("#player2_remaining").innerHTML = "R: " + remainingBallsOfPlayer2;
+
+    CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
+}
+
+function CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2)
+{
+    //TODO lock controls so no further game changing input can be made until the game is restarted.
+
+    if(remainingBallsOfPlayer1 === 0)
+    {
+        alert(GetStoredPlayerName(_player1Label) + " hat das Spiel gewonnen.");
+    }
+
+    if(remainingBallsOfPlayer2 === 0)
+    {
+        alert(GetStoredPlayerName(_player2Label) + " hat das Spiel gewonnen.");
+    }
 }
 
 function CaptureOutsideDialogClick()

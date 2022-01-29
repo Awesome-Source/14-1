@@ -57,13 +57,13 @@
 					<button class="switch-player perfect-center w3-xxlarge margin-8" onclick="SwitchPlayer()"><i class="fas fa-arrows-alt-h"></i></button>
 					<button class="remaining-balls perfect-center w3-xxlarge margin-8" onclick="SetVisibilityOfRemainingBallsDialog(true)" id="remaining_balls_display"></button>
 					<button class="undo perfect-center w3-xlarge margin-8" onclick="Undo()" disabled><i class="fas fa-undo"></i></button>
-					<button class="new-rack perfect-center w3-xlarge margin-8" onclick="NewRack()" disabled>
+					<button class="new-rack perfect-center w3-xlarge margin-8" onclick="NewRack()">
 						<svg width="1em" height="1em" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" >
 							<path fill="#ffffff" d="M80 352c-44.2 0-80 35.8-80 80s35.8 80 80 80 80-35.8 80-80-35.8-80-80-80zm208-192c44.2 0 80-35.8 80-80S332.2 0 288 0s-80 35.8-80 80 35.8 80 80 80zm-32 88c0-44.2-35.8-80-80-80s-80 35.8-80 80 35.8 80 80 80 80-35.8 80-80zm32 104c-44.2 0-80 35.8-80 80s35.8 80 80 80 80-35.8 80-80-35.8-80-80-80zm208 0c-44.2 0-80 35.8-80 80s35.8 80 80 80 80-35.8 80-80-35.8-80-80-80zm-16-104c0-44.2-35.8-80-80-80s-80 35.8-80 80 35.8 80 80 80 80-35.8 80-80z"></path>
 						</svg>
 					</button>
-					<button class="minus perfect-center w3-xlarge margin-8" onclick="ChangeAmountOfRemainingBalls(-1)"><i class="fas fa-minus"></i></button>
-					<button class="plus perfect-center w3-xlarge margin-8" onclick="ChangeAmountOfRemainingBalls(1)"><i class="fas fa-plus"></i></button>
+					<button class="minus perfect-center w3-xlarge margin-8" onclick="DecrementOne()"><i class="fas fa-minus"></i></button>
+					<button class="plus perfect-center w3-xlarge margin-8" onclick="IncrementOne()"><i class="fas fa-plus"></i></button>
 					<button class="foul perfect-center w3-xlarge margin-8" onclick="Foul()" disabled><i class="fas fa-bolt"></i></button>
 					<button class="detailslist perfect-center w3-xlarge margin-8" onclick="SetVisibilityOfDetailsDialog(true)" disabled><i class="fas fa-bars"></i></button>
 				</div>
