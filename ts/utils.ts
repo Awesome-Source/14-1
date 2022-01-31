@@ -1,9 +1,9 @@
-function isNumeric(value) 
+function isNumeric(value: string) 
 {
     return /^\d+$/.test(value);
 }
 
-function SwitchClass(element, classToRemove, classToAdd)
+function SwitchClass(element: Element, classToRemove: string, classToAdd: string)
 {
     element.classList.remove(classToRemove);
 
@@ -13,13 +13,13 @@ function SwitchClass(element, classToRemove, classToAdd)
     }
 }
 
-function ShowElementById(elementId)
+function ShowElementById(elementId: string)
 {
     const element =document.querySelector("#" + elementId);
     element.classList.remove("w3-hide");
 }
 
-function HideElementById(elementId)
+function HideElementById(elementId: string)
 {
     const element =document.querySelector("#" + elementId);
     if(!element.classList.contains("w3-hide"))
@@ -28,8 +28,14 @@ function HideElementById(elementId)
     }
 }
 
-function SetInnerHtmlById(elementId, innerHtml)
+function SetInnerHtmlById(elementId: string, innerHtml: string)
 {
     const element = document.querySelector("#" + elementId);
     element.innerHTML = innerHtml;
+}
+
+function GetInputFromElementById(elementId: string)
+{
+    const element = <HTMLInputElement> document.querySelector("#" + elementId);
+    return element.value;
 }

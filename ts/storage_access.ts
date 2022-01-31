@@ -18,7 +18,7 @@ const _gameStateKey = "game_state";
 const _gameStateInProgress = "in_progress";
 const _gameStateNoGame = "no_game";
 
-function GetCurrentScoreOfPlayer(playerLabel)
+function GetCurrentScoreOfPlayer(playerLabel: string)
 {
     const scoreStorageKey = playerLabel === _player1Label ? _player1ScoreKey : _player2ScoreKey;
 
@@ -26,13 +26,13 @@ function GetCurrentScoreOfPlayer(playerLabel)
     return Number(playerScoreString);
 }
 
-function SetCurrentScoreOfPlayer(playerLabel, score)
+function SetCurrentScoreOfPlayer(playerLabel: string, score: number)
 {
     const scoreStorageKey = playerLabel === _player1Label ? _player1ScoreKey : _player2ScoreKey;
     localStorage.setItem(scoreStorageKey, "" + score);
 }
 
-function GetPreviousScoreOfPlayer(playerLabel)
+function GetPreviousScoreOfPlayer(playerLabel: string)
 {
     const scoreStorageKey = playerLabel === _player1Label ? _player1PreviousScoreKey : _player2PreviousScoreKey;
 
@@ -40,13 +40,13 @@ function GetPreviousScoreOfPlayer(playerLabel)
     return Number(playerScoreString);
 }
 
-function SetPreviousScoreOfPlayer(playerLabel, score)
+function SetPreviousScoreOfPlayer(playerLabel: string, previousScore: number)
 {
     const scoreStorageKey = playerLabel === _player1Label ? _player1PreviousScoreKey : _player2PreviousScoreKey;
-    localStorage.setItem(scoreStorageKey, "" + score);
+    localStorage.setItem(scoreStorageKey, "" + previousScore);
 }
 
-function GetHighestSeriesOfPlayer(playerLabel)
+function GetHighestSeriesOfPlayer(playerLabel: string)
 {
     const storageKey = playerLabel === _player1Label ? _player1HighestSeriesKey : _player2HighestSeriesKey;
 
@@ -54,13 +54,13 @@ function GetHighestSeriesOfPlayer(playerLabel)
     return Number(playerScoreString);
 }
 
-function SetHighestSeriesOfPlayer(playerLabel, score)
+function SetHighestSeriesOfPlayer(playerLabel: string, highestSeries: number)
 {
     const storageKey = playerLabel === _player1Label ? _player1HighestSeriesKey : _player2HighestSeriesKey;
-    localStorage.setItem(storageKey, "" + score);
+    localStorage.setItem(storageKey, "" + highestSeries);
 }
 
-function GetStoredTakeOfPlayer(playerLabel)
+function GetStoredTakeOfPlayer(playerLabel: string)
 {
     const takeStorageKey = playerLabel === _player1Label ? _player1TakeKey : _player2TakeKey;
 
@@ -68,13 +68,13 @@ function GetStoredTakeOfPlayer(playerLabel)
     return Number(playerScoreString);
 }
 
-function StoreTakeOfPlayer(playerLabel, score)
+function StoreTakeOfPlayer(playerLabel: string, take: number)
 {
     const scoreStorageKey = playerLabel === _player1Label ? _player1TakeKey : _player2TakeKey;
-    localStorage.setItem(scoreStorageKey, "" + score);
+    localStorage.setItem(scoreStorageKey, "" + take);
 }
 
-function GetStoredFoulCountOfPlayer(playerLabel)
+function GetStoredFoulCountOfPlayer(playerLabel: string)
 {
     const foulStorageKey = playerLabel === _player1Label ? _player1FoulsKey : _player2FoulsKey;
 
@@ -82,10 +82,10 @@ function GetStoredFoulCountOfPlayer(playerLabel)
     return Number(playerScoreString);
 }
 
-function StoreFoulCountOfPlayer(playerLabel, score)
+function StoreFoulCountOfPlayer(playerLabel: string, foulCount: number)
 {
     const foulStorageKey = playerLabel === _player1Label ? _player1FoulsKey : _player2FoulsKey;
-    localStorage.setItem(foulStorageKey, "" + score);
+    localStorage.setItem(foulStorageKey, "" + foulCount);
 }
 
 function GetStoredTargetScore()
@@ -100,7 +100,7 @@ function GetActivePlayer()
     return localStorage.getItem(_activePlayerKey);
 }
 
-function StoreActivePlayer(playerLabel)
+function StoreActivePlayer(playerLabel: string)
 {
     localStorage.setItem(_activePlayerKey, playerLabel);
 }
@@ -112,29 +112,29 @@ function GetStoredAmountOfRemainingBallsOnTable()
     return Number(remainingBallsOnTable);
 }
 
-function StoreAmountOfRemainingBallsOnTable(remainingBalls)
+function StoreAmountOfRemainingBallsOnTable(remainingBalls: number)
 {
     localStorage.setItem(_remainingBallsOnTableKey, "" + remainingBalls);
 }
 
-function StorePlayerName(playerLabel, playerName)
+function StorePlayerName(playerLabel: string, playerName: string)
 {
     const nameStorageKey = playerLabel === _player1Label ? _player1NameKey : _player2NameKey;
     localStorage.setItem(nameStorageKey, playerName);
 }
 
-function GetStoredPlayerName(playerLabel)
+function GetStoredPlayerName(playerLabel: string)
 {
     const nameStorageKey = playerLabel === _player1Label ? _player1NameKey : _player2NameKey;
     return localStorage.getItem(nameStorageKey);
 }
 
-function StoreTargetScore(targetScoreString)
+function StoreTargetScore(targetScoreString: string)
 {
     localStorage.setItem(_targetScoreKey, targetScoreString);
 }
 
-function StoreGameState(gameState)
+function StoreGameState(gameState: string)
 {
     localStorage.setItem(_gameStateKey, gameState);
 }

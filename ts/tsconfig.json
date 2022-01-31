@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "sourceMap": true,
+    "listFiles": true,
+    "target": "es5",
+    "outFile": "../js/141.js"
+  },
+  "include": [
+    "./**/*"
+  ],
+  "compileOnSave": true
+}
