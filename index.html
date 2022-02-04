@@ -18,7 +18,7 @@
 				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_player2_name" class="w3-input w3-round" type="text" placeholder="Spieler 2" /></div>
 				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_target_score" class="w3-input w3-round" type="text" placeholder="Spiel auf" /></div>
 				<div class="perfect-center margin-8">
-					<button class="padding-left-right-32" onclick="CreateNewGame()"><i class="fas fa-long-arrow-alt-right w3-xxlarge"></i></button>
+					<button class="padding-left-right-32" onclick="UserInputGateway.CreateNewGame()"><i class="fas fa-long-arrow-alt-right w3-xxlarge"></i></button>
 				</div>				
 			</div>
 
@@ -26,7 +26,7 @@
 				<div class="scoreboard-grid fill-area">
 					<div class="back perfect-center"></div>
 					<div class="header-bar">
-						<a class="padding-left-16" href="#" onclick="ReturnToMenu();return false;"><i class="fas fa-arrow-left"></i></a>
+						<a class="padding-left-16" href="#" onclick="UserInputGateway.ReturnToMenu();return false;"><i class="fas fa-arrow-left"></i></a>
 						<span>14:1</span>
 						<span style="visibility: hidden;">flex</span>
 					</div>
@@ -55,45 +55,45 @@
 						<span id="player2_remaining"></span>
 					</div>
 	
-					<button class="switch-player perfect-center w3-xxlarge margin-8" onclick="SwitchPlayer()"><i class="fas fa-arrows-alt-h"></i></button>
-					<button class="remaining-balls perfect-center w3-xxlarge margin-8" onclick="SetVisibilityOfRemainingBallsDialog(true)" id="remaining_balls_display"></button>
-					<button class="undo perfect-center w3-xlarge margin-8" onclick="Undo()" disabled><i class="fas fa-undo"></i></button>
-					<button class="new-rack perfect-center w3-xlarge margin-8" onclick="NewRack()">
+					<button class="switch-player perfect-center w3-xxlarge margin-8" onclick="UserInputGateway.SwitchPlayer()"><i class="fas fa-arrows-alt-h"></i></button>
+					<button class="remaining-balls perfect-center w3-xxlarge margin-8" onclick="UserInputGateway.SetVisibilityOfRemainingBallsDialog(true)" id="remaining_balls_display"></button>
+					<button class="undo perfect-center w3-xlarge margin-8" onclick="UserInputGateway.Undo()" disabled><i class="fas fa-undo"></i></button>
+					<button class="new-rack perfect-center w3-xlarge margin-8" onclick="UserInputGateway.NewRack()">
 						<svg width="1em" height="1em" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" >
 							<path fill="#ffffff" d="M80 352c-44.2 0-80 35.8-80 80s35.8 80 80 80 80-35.8 80-80-35.8-80-80-80zm208-192c44.2 0 80-35.8 80-80S332.2 0 288 0s-80 35.8-80 80 35.8 80 80 80zm-32 88c0-44.2-35.8-80-80-80s-80 35.8-80 80 35.8 80 80 80 80-35.8 80-80zm32 104c-44.2 0-80 35.8-80 80s35.8 80 80 80 80-35.8 80-80-35.8-80-80-80zm208 0c-44.2 0-80 35.8-80 80s35.8 80 80 80 80-35.8 80-80-35.8-80-80-80zm-16-104c0-44.2-35.8-80-80-80s-80 35.8-80 80 35.8 80 80 80 80-35.8 80-80z"></path>
 						</svg>
 					</button>
-					<button class="minus perfect-center w3-xlarge margin-8" onclick="DecrementOne()"><i class="fas fa-minus"></i></button>
-					<button class="plus perfect-center w3-xlarge margin-8" onclick="IncrementOne()"><i class="fas fa-plus"></i></button>
-					<button class="foul perfect-center w3-xlarge margin-8" onclick="Foul()"><i class="fas fa-bolt"></i></button>
-					<button class="detailslist perfect-center w3-xlarge margin-8" onclick="SetVisibilityOfDetailsDialog(true)" disabled><i class="fas fa-bars"></i></button>
+					<button class="minus perfect-center w3-xlarge margin-8" onclick="UserInputGateway.DecrementOne()"><i class="fas fa-minus"></i></button>
+					<button class="plus perfect-center w3-xlarge margin-8" onclick="UserInputGateway.IncrementOne()"><i class="fas fa-plus"></i></button>
+					<button class="foul perfect-center w3-xlarge margin-8" onclick="UserInputGateway.Foul()"><i class="fas fa-bolt"></i></button>
+					<button class="detailslist perfect-center w3-xlarge margin-8" onclick="UserInputGateway.SetVisibilityOfDetailsDialog(true)" disabled><i class="fas fa-bars"></i></button>
 				</div>
 			
 				<div id="remaining_balls_selection_dialog" class="bg-modal" onclick="CaptureOutsideDialogClick()">
 					<div class="fill-area perfect-center">
 						<div class="bg-modal-content w3-round w3-card margin-8 remaining-balls-grid" onclick="StopPropagation(event)">
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(0, event)">00</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(1, event)">01</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(2, event)">02</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(3, event)">03</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(4, event)">04</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(5, event)">05</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(6, event)">06</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(7, event)">07</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(8, event)">08</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(9, event)">09</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(10, event)">10</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(11, event)">11</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(12, event)">12</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(13, event)">13</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(14, event)">14</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="SetRemainingBallsFromDialog(15, event)">15</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(0, event)">00</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(1, event)">01</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(2, event)">02</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(3, event)">03</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(4, event)">04</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(5, event)">05</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(6, event)">06</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(7, event)">07</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(8, event)">08</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(9, event)">09</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(10, event)">10</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(11, event)">11</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(12, event)">12</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(13, event)">13</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(14, event)">14</button>
+							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(15, event)">15</button>
 						</div>
 					</div>	
 				</div>
 			</div>			
 		</div>
 		<script src="js/141.js"></script>
-		<script>ReloadStoredState()</script>
+		<script>UserInputGateway.ReloadStoredState()</script>
 	</body>
 </html>
