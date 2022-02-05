@@ -48,10 +48,6 @@ var GameManager = (function () {
         var takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
         GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
     };
-    GameManager.SetRemainingBallsFromDialog = function (remainingBalls) {
-        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
-        this.SetRemainingBalls(remainingBalls);
-    };
     GameManager.Undo = function () {
     };
     GameManager.NewRack = function () {
@@ -60,19 +56,31 @@ var GameManager = (function () {
     };
     GameManager.Foul = function () {
         var activePlayer = LocalStorageManager.GetActivePlayer();
-        var currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
         var takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(activePlayer);
+        if (takeOfPlayer === 1) {
+            GameViewManager.SetVisibilityOfDialog("break_foul_dialog", true);
+            return;
+        }
+        this.HandleNormalFoul();
+    };
+    GameManager.HandleBreakFoul = function () {
+        var activePlayer = LocalStorageManager.GetActivePlayer();
         var foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
         foulCount++;
-        var negativePoints = -1;
-        if (takeOfPlayer === 1) {
-            if (confirm("Wenn es sich um ein Foul beim Break handelt bestätigen Sie mit Ok.")) {
-                negativePoints = -2;
-            }
-        }
+        this.ApplyFoulPoints(activePlayer, foulCount, -2);
+    };
+    GameManager.HandleNormalFoul = function () {
+        var activePlayer = LocalStorageManager.GetActivePlayer();
+        var foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
+        foulCount++;
         if (foulCount % 3 === 0) {
-            negativePoints = -16;
+            this.ApplyFoulPoints(activePlayer, foulCount, -16);
+            return;
         }
+        this.ApplyFoulPoints(activePlayer, foulCount, -1);
+    };
+    GameManager.ApplyFoulPoints = function (activePlayer, foulCount, negativePoints) {
+        var currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
         LocalStorageManager.StoreFoulCountOfPlayer(activePlayer, foulCount);
         LocalStorageManager.StoreCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
         this.SetPlayerScoreValuesToStoredValues();
@@ -439,6 +447,9 @@ var UserInputGateway = (function () {
         HtmlUtils.StopPropagation(event);
         GameViewManager.SetVisibilityOfDialog(dialogId, false);
     };
+    UserInputGateway.StopPropagation = function (event) {
+        HtmlUtils.StopPropagation(event);
+    };
     UserInputGateway.ReturnToMenu = function (event) {
         this.HideDialog("confirm_abort_dialog", event);
         GameManager.ReturnToMenu();
@@ -451,7 +462,8 @@ var UserInputGateway = (function () {
     };
     UserInputGateway.SetRemainingBallsFromDialog = function (remainingBalls, event) {
         HtmlUtils.StopPropagation(event);
-        GameManager.SetRemainingBallsFromDialog(remainingBalls);
+        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
+        GameManager.SetRemainingBalls(remainingBalls);
     };
     UserInputGateway.Undo = function () {
         GameManager.Undo();
@@ -473,6 +485,14 @@ var UserInputGateway = (function () {
     };
     UserInputGateway.ReloadStoredState = function () {
         GameManager.ReloadStoredState();
+    };
+    UserInputGateway.HandleBreakFoul = function () {
+        GameViewManager.SetVisibilityOfDialog("break_foul_dialog", false);
+        GameManager.HandleBreakFoul();
+    };
+    UserInputGateway.HandleNormalFoul = function () {
+        GameViewManager.SetVisibilityOfDialog("break_foul_dialog", false);
+        GameManager.HandleNormalFoul();
     };
     return UserInputGateway;
 }());

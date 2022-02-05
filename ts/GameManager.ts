@@ -64,12 +64,6 @@ class GameManager
         GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
     }
 
-    public static SetRemainingBallsFromDialog(remainingBalls: number)
-    {
-        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
-        this.SetRemainingBalls(remainingBalls);
-    }
-
     public static Undo()
     {
         //TODO implement
@@ -84,26 +78,43 @@ class GameManager
     public static Foul()
     {
         const activePlayer = LocalStorageManager.GetActivePlayer();
-        const currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
         const takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(activePlayer);
-        let foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
-        foulCount++;
-
-        let negativePoints = -1;
 
         if(takeOfPlayer === 1)
         {
-            if(confirm("Wenn es sich um ein Foul beim Break handelt bestätigen Sie mit Ok."))
-            {
-                negativePoints = -2;
-            }
-        }    
+            GameViewManager.SetVisibilityOfDialog("break_foul_dialog", true);
+            return;
+        }
+
+        this.HandleNormalFoul();
+    }
+
+    public static HandleBreakFoul()
+    {
+        const activePlayer = LocalStorageManager.GetActivePlayer();
+        let foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
+        foulCount++;
+        this.ApplyFoulPoints(activePlayer, foulCount, -2);
+    }
+
+    public static HandleNormalFoul()
+    {
+        const activePlayer = LocalStorageManager.GetActivePlayer();
+        let foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
+        foulCount++;
 
         if(foulCount % 3 === 0)
         {
-            negativePoints = -16;
+            this.ApplyFoulPoints(activePlayer, foulCount, -16);
+            return;
         }
 
+        this.ApplyFoulPoints(activePlayer, foulCount, -1);  
+    }
+
+    public static ApplyFoulPoints(activePlayer: string, foulCount: number, negativePoints: number)
+    {
+        const currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
         LocalStorageManager.StoreFoulCountOfPlayer(activePlayer, foulCount);
         LocalStorageManager.StoreCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
         this.SetPlayerScoreValuesToStoredValues();

@@ -71,7 +71,7 @@
 			
 				<div id="remaining_balls_selection_dialog" class="bg-modal" onclick="UserInputGateway.CaptureOutsideDialogClick('remaining_balls_selection_dialog')">
 					<div class="fill-area perfect-center">
-						<div class="bg-modal-content w3-round w3-card margin-8 remaining-balls-grid" onclick="StopPropagation(event)">
+						<div class="bg-modal-content w3-round w3-card margin-8 remaining-balls-grid" onclick="UserInputGateway.StopPropagation(event)">
 							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(0, event)">00</button>
 							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(1, event)">01</button>
 							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.SetRemainingBallsFromDialog(2, event)">02</button>
@@ -94,7 +94,7 @@
 
 				<div id="confirm_abort_dialog" class="bg-modal" onclick="UserInputGateway.CaptureOutsideDialogClick('confirm_abort_dialog')">
 					<div class="fill-area perfect-center">
-						<div class="bg-modal-content w3-round w3-card margin8" onclick="StopPropagation(event)">
+						<div class="bg-modal-content w3-round w3-card margin8" onclick="UserInputGateway.StopPropagation(event)">
 							<div class="padding-all-8">
 								Soll das Spiel wirklich abgebrochen werden?
 							</div>
@@ -106,11 +106,16 @@
 					</div>	
 				</div>
 
-				<div id="break_foul_dialog" class="bg-modal" onclick="UserInputGateway.CaptureOutsideDialogClick('break_foul_dialog')">
+				<div id="break_foul_dialog" class="bg-modal">
 					<div class="fill-area perfect-center">
-						<div class="bg-modal-content w3-round w3-card margin-8" onclick="StopPropagation(event)">
-							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HideDialog('break_foul_dialog', event)">Ja</button>
-							<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HideDialog('break_foul_dialog', event)">Nein</button>
+						<div class="bg-modal-content w3-round w3-card margin-8">
+							<div class="padding-all-8">
+								War es ein Foul beim Break?
+							</div>
+							<div class="padding-all-8 perfect-center">
+								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HandleBreakFoul()">Ja</button>
+								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HandleNormalFoul()">Nein</button>
+							</div>							
 						</div>
 					</div>	
 				</div>
