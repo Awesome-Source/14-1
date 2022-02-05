@@ -2,37 +2,18 @@ var GameManager = (function () {
     function GameManager() {
     }
     GameManager.ReturnToMenu = function () {
-        if (!confirm("Soll das Spiel wirklich abgebrochen werden?")) {
-            return;
-        }
         LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateNoGame);
         this.ShowViewDependingOnGameState();
     };
     GameManager.CreateNewGame = function () {
         this.ResetGame();
-        var nameOfPlayer1 = HtmlUtils.GetInputFromElementWithId("menu_player1_name");
-        var nameOfPlayer2 = HtmlUtils.GetInputFromElementWithId("menu_player2_name");
-        var targetScoreString = HtmlUtils.GetInputFromElementWithId("menu_target_score");
-        if (nameOfPlayer1 === "") {
-            alert("Bitte einen Namen für Spieler 1 eingeben.");
+        var startGameInfo = GameViewManager.ExtractStartGameInfo();
+        if (startGameInfo === null) {
             return;
         }
-        if (nameOfPlayer2 === "") {
-            alert("Bitte einen Namen für Spieler 2 eingeben.");
-            return;
-        }
-        if (!this.isNumeric(targetScoreString)) {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
-            return;
-        }
-        var targetScore = Number(targetScoreString);
-        if (targetScore < 20 || targetScore > 200) {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
-            return;
-        }
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player1, nameOfPlayer1);
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player2, nameOfPlayer2);
-        LocalStorageManager.StoreTargetScore(targetScoreString);
+        LocalStorageManager.StorePlayerName(PlayerConstants.Player1, startGameInfo.NameOfPlayer1);
+        LocalStorageManager.StorePlayerName(PlayerConstants.Player2, startGameInfo.NameOfPlayer2);
+        LocalStorageManager.StoreTargetScore(startGameInfo.TargetScore);
         LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateInProgress);
         LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player1, 0);
         LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player2, 0);
@@ -40,9 +21,6 @@ var GameManager = (function () {
         LocalStorageManager.StoreTakeOfPlayer(PlayerConstants.Player2, 0);
         this.ReloadStoredState();
         this.ShowViewDependingOnGameState();
-    };
-    GameManager.isNumeric = function (value) {
-        return /^\d+$/.test(value);
     };
     GameManager.ShowViewDependingOnGameState = function () {
         var isGameInProgress = LocalStorageManager.IsGameInProgress();
@@ -71,7 +49,7 @@ var GameManager = (function () {
         GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
     };
     GameManager.SetRemainingBallsFromDialog = function (remainingBalls) {
-        GameViewManager.SetVisibilityOfRemainingBallsDialog(false);
+        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
         this.SetRemainingBalls(remainingBalls);
     };
     GameManager.Undo = function () {
@@ -100,8 +78,6 @@ var GameManager = (function () {
         this.SetPlayerScoreValuesToStoredValues();
         this.UpdateDetails();
         this.SwitchPlayer();
-    };
-    GameManager.SetVisibilityOfDetailsDialog = function (_isVisible) {
     };
     GameManager.ReloadStoredState = function () {
         this.ShowViewDependingOnGameState();
@@ -230,9 +206,9 @@ var GameViewManager = (function () {
         HtmlUtils.SwitchClass(player1NameElement, "w3-blue", "w3-light-grey");
         HtmlUtils.SwitchClass(player2NameElement, "w3-light-grey", "w3-blue");
     };
-    GameViewManager.SetVisibilityOfRemainingBallsDialog = function (isVisible) {
+    GameViewManager.SetVisibilityOfDialog = function (dialogId, isVisible) {
         var displayValue = isVisible ? "block" : "none";
-        document.getElementById('remaining_balls_selection_dialog').style.display = displayValue;
+        document.getElementById(dialogId).style.display = displayValue;
     };
     GameViewManager.SetRemainingBallsDisplayValue = function (value) {
         HtmlUtils.SetInnerHtmlById("remaining_balls_display", "" + value);
@@ -272,6 +248,29 @@ var GameViewManager = (function () {
         HtmlUtils.ShowElementById("menu_view");
         HtmlUtils.HideElementById("game_view");
     };
+    GameViewManager.ExtractStartGameInfo = function () {
+        var nameOfPlayer1 = HtmlUtils.GetInputFromElementWithId("menu_player1_name");
+        var nameOfPlayer2 = HtmlUtils.GetInputFromElementWithId("menu_player2_name");
+        var targetScoreString = HtmlUtils.GetInputFromElementWithId("menu_target_score");
+        if (nameOfPlayer1 === "") {
+            alert("Bitte einen Namen für Spieler 1 eingeben.");
+            return null;
+        }
+        if (nameOfPlayer2 === "") {
+            alert("Bitte einen Namen für Spieler 2 eingeben.");
+            return null;
+        }
+        if (!Validator.IsNumeric(targetScoreString)) {
+            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            return null;
+        }
+        var targetScore = Number(targetScoreString);
+        if (targetScore < 20 || targetScore > 200) {
+            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            return null;
+        }
+        return new StartGameInfo(nameOfPlayer1, nameOfPlayer2, targetScore);
+    };
     return GameViewManager;
 }());
 var HtmlUtils = (function () {
@@ -284,21 +283,21 @@ var HtmlUtils = (function () {
         }
     };
     HtmlUtils.ShowElementById = function (elementId) {
-        var element = document.querySelector("#" + elementId);
+        var element = document.getElementById(elementId);
         element.classList.remove("w3-hide");
     };
     HtmlUtils.HideElementById = function (elementId) {
-        var element = document.querySelector("#" + elementId);
+        var element = document.getElementById(elementId);
         if (!element.classList.contains("w3-hide")) {
             element.classList.add("w3-hide");
         }
     };
     HtmlUtils.SetInnerHtmlById = function (elementId, innerHtml) {
-        var element = document.querySelector("#" + elementId);
+        var element = document.getElementById(elementId);
         element.innerHTML = innerHtml;
     };
     HtmlUtils.GetInputFromElementWithId = function (elementId) {
-        var element = document.querySelector("#" + elementId);
+        var element = document.getElementById(elementId);
         return element.value;
     };
     HtmlUtils.StopPropagation = function (event) {
@@ -404,8 +403,8 @@ var LocalStorageManager = (function () {
     LocalStorageManager.GetPlayerName = function (playerLabel) {
         return this.GetStoredStringForPlayer(playerLabel, LocalStorageConstants.Player1NameKey, LocalStorageConstants.Player2NameKey);
     };
-    LocalStorageManager.StoreTargetScore = function (targetScoreString) {
-        localStorage.setItem(LocalStorageConstants.TargetScoreKey, targetScoreString);
+    LocalStorageManager.StoreTargetScore = function (targetScore) {
+        localStorage.setItem(LocalStorageConstants.TargetScoreKey, "" + targetScore);
     };
     LocalStorageManager.StoreGameState = function (gameState) {
         localStorage.setItem(LocalStorageConstants.GameStateKey, gameState);
@@ -422,13 +421,26 @@ var PlayerConstants = (function () {
     PlayerConstants.Player2 = "player2";
     return PlayerConstants;
 }());
+var StartGameInfo = (function () {
+    function StartGameInfo(NameOfPlayer1, NameOfPlayer2, TargetScore) {
+        this.NameOfPlayer1 = NameOfPlayer1;
+        this.NameOfPlayer2 = NameOfPlayer2;
+        this.TargetScore = TargetScore;
+    }
+    return StartGameInfo;
+}());
 var UserInputGateway = (function () {
     function UserInputGateway() {
     }
-    UserInputGateway.SetVisibilityOfRemainingBallsDialog = function (isVisible) {
-        GameViewManager.SetVisibilityOfRemainingBallsDialog(isVisible);
+    UserInputGateway.ShowDialog = function (dialogId) {
+        GameViewManager.SetVisibilityOfDialog(dialogId, true);
     };
-    UserInputGateway.ReturnToMenu = function () {
+    UserInputGateway.HideDialog = function (dialogId, event) {
+        HtmlUtils.StopPropagation(event);
+        GameViewManager.SetVisibilityOfDialog(dialogId, false);
+    };
+    UserInputGateway.ReturnToMenu = function (event) {
+        this.HideDialog("confirm_abort_dialog", event);
         GameManager.ReturnToMenu();
     };
     UserInputGateway.CreateNewGame = function () {
@@ -438,8 +450,7 @@ var UserInputGateway = (function () {
         GameManager.SwitchPlayer();
     };
     UserInputGateway.SetRemainingBallsFromDialog = function (remainingBalls, event) {
-        event = event || window.event;
-        event.stopPropagation();
+        HtmlUtils.StopPropagation(event);
         GameManager.SetRemainingBallsFromDialog(remainingBalls);
     };
     UserInputGateway.Undo = function () {
@@ -457,15 +468,20 @@ var UserInputGateway = (function () {
     UserInputGateway.Foul = function () {
         GameManager.Foul();
     };
-    UserInputGateway.SetVisibilityOfDetailsDialog = function (isVisible) {
-        GameManager.SetVisibilityOfDetailsDialog(isVisible);
-    };
-    UserInputGateway.CaptureOutsideDialogClick = function () {
-        GameViewManager.SetVisibilityOfRemainingBallsDialog(false);
+    UserInputGateway.CaptureOutsideDialogClick = function (dialogId) {
+        GameViewManager.SetVisibilityOfDialog(dialogId, false);
     };
     UserInputGateway.ReloadStoredState = function () {
         GameManager.ReloadStoredState();
     };
     return UserInputGateway;
+}());
+var Validator = (function () {
+    function Validator() {
+    }
+    Validator.IsNumeric = function (value) {
+        return /^\d+$/.test(value);
+    };
+    return Validator;
 }());
 //# sourceMappingURL=141.js.map

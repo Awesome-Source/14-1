@@ -2,11 +2,6 @@ class GameManager
 {
     public static ReturnToMenu()
     {
-        if(!confirm("Soll das Spiel wirklich abgebrochen werden?"))
-        {
-            return;
-        }
-
         LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateNoGame);
         this.ShowViewDependingOnGameState();
     }
@@ -14,39 +9,16 @@ class GameManager
     public static CreateNewGame()
     {
         this.ResetGame();
-        const nameOfPlayer1 = HtmlUtils.GetInputFromElementWithId("menu_player1_name");
-        const nameOfPlayer2 = HtmlUtils.GetInputFromElementWithId("menu_player2_name");
-        const targetScoreString = HtmlUtils.GetInputFromElementWithId("menu_target_score");
-
-        if(nameOfPlayer1 === "")
+        const startGameInfo = GameViewManager.ExtractStartGameInfo();
+        
+        if(startGameInfo === null)
         {
-            alert("Bitte einen Namen für Spieler 1 eingeben.");
             return;
         }
 
-        if(nameOfPlayer2 === "")
-        {
-            alert("Bitte einen Namen für Spieler 2 eingeben.");
-            return;
-        }
-
-        if(!this.isNumeric(targetScoreString))
-        {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
-            return;
-        }
-
-        const targetScore = Number(targetScoreString);
-
-        if(targetScore < 20 || targetScore > 200)
-        {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
-            return;
-        }
-
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player1, nameOfPlayer1);
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player2, nameOfPlayer2);
-        LocalStorageManager.StoreTargetScore(targetScoreString);
+        LocalStorageManager.StorePlayerName(PlayerConstants.Player1, startGameInfo.NameOfPlayer1);
+        LocalStorageManager.StorePlayerName(PlayerConstants.Player2, startGameInfo.NameOfPlayer2);
+        LocalStorageManager.StoreTargetScore(startGameInfo.TargetScore);
         LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateInProgress);
         LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player1, 0);
         LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player2, 0);
@@ -54,11 +26,6 @@ class GameManager
         LocalStorageManager.StoreTakeOfPlayer(PlayerConstants.Player2, 0);
         this.ReloadStoredState();
         this.ShowViewDependingOnGameState();
-    }
-
-    private static isNumeric(value: string) 
-    {
-        return /^\d+$/.test(value);
     }
 
     public static ShowViewDependingOnGameState()
@@ -99,7 +66,7 @@ class GameManager
 
     public static SetRemainingBallsFromDialog(remainingBalls: number)
     {
-        GameViewManager.SetVisibilityOfRemainingBallsDialog(false);
+        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
         this.SetRemainingBalls(remainingBalls);
     }
 
@@ -142,11 +109,6 @@ class GameManager
         this.SetPlayerScoreValuesToStoredValues();
         this.UpdateDetails();
         this.SwitchPlayer();
-    }
-
-    public static SetVisibilityOfDetailsDialog(_isVisible: boolean)
-    {
-        //TODO implement
     }
 
     public static ReloadStoredState()

@@ -116,9 +116,9 @@ class LocalStorageManager
         return this.GetStoredStringForPlayer(playerLabel, LocalStorageConstants.Player1NameKey, LocalStorageConstants.Player2NameKey);
     }
 
-    public static StoreTargetScore(targetScoreString: string)
+    public static StoreTargetScore(targetScore: number)
     {
-        localStorage.setItem(LocalStorageConstants.TargetScoreKey, targetScoreString);
+        localStorage.setItem(LocalStorageConstants.TargetScoreKey, "" + targetScore);
     }
 
     public static StoreGameState(gameState: string)

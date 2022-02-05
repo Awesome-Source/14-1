@@ -11,13 +11,13 @@ class HtmlUtils{
     
     public static ShowElementById(elementId: string)
     {
-        const element =document.querySelector("#" + elementId);
+        const element = document.getElementById(elementId);
         element.classList.remove("w3-hide");
     }
     
     public static HideElementById(elementId: string)
     {
-        const element =document.querySelector("#" + elementId);
+        const element = document.getElementById(elementId);
         if(!element.classList.contains("w3-hide"))
         {
             element.classList.add("w3-hide");
@@ -26,13 +26,13 @@ class HtmlUtils{
     
     public static SetInnerHtmlById(elementId: string, innerHtml: string)
     {
-        const element = document.querySelector("#" + elementId);
+        const element = document.getElementById(elementId);
         element.innerHTML = innerHtml;
     }
     
     public static GetInputFromElementWithId(elementId: string)
     {
-        const element = <HTMLInputElement> document.querySelector("#" + elementId);
+        const element = <HTMLInputElement> document.getElementById(elementId);
         return element.value;
     }
     

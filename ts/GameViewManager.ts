@@ -21,10 +21,10 @@ class GameViewManager
         HtmlUtils.SwitchClass(player2NameElement, "w3-light-grey", "w3-blue"); 
     }
 
-    public static SetVisibilityOfRemainingBallsDialog(isVisible: boolean)
+    public static SetVisibilityOfDialog(dialogId: string, isVisible: boolean)
     {
         const displayValue = isVisible ? "block" : "none";
-        document.getElementById('remaining_balls_selection_dialog').style.display= displayValue;
+        document.getElementById(dialogId).style.display= displayValue;
     }
 
     public static SetRemainingBallsDisplayValue(value: number)
@@ -62,7 +62,7 @@ class GameViewManager
         HtmlUtils.SetInnerHtmlById("player2_remaining", "R: " + remainingBallsOfPlayer2);
     }
 
-    public static UpdatePlayerNames(nameOfPlayer1: string,nameOfPlayer2: string)
+    public static UpdatePlayerNames(nameOfPlayer1: string, nameOfPlayer2: string)
     {
         HtmlUtils.SetInnerHtmlById("player1_name", nameOfPlayer1);
         HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
@@ -83,5 +83,40 @@ class GameViewManager
     {
         HtmlUtils.ShowElementById("menu_view");
         HtmlUtils.HideElementById("game_view");
+    }
+
+    public static ExtractStartGameInfo()
+    {
+        const nameOfPlayer1 = HtmlUtils.GetInputFromElementWithId("menu_player1_name");
+        const nameOfPlayer2 = HtmlUtils.GetInputFromElementWithId("menu_player2_name");
+        const targetScoreString = HtmlUtils.GetInputFromElementWithId("menu_target_score");
+
+        if(nameOfPlayer1 === "")
+        {
+            alert("Bitte einen Namen für Spieler 1 eingeben.");
+            return null;
+        }
+
+        if(nameOfPlayer2 === "")
+        {
+            alert("Bitte einen Namen für Spieler 2 eingeben.");
+            return null;
+        }
+
+        if(!Validator.IsNumeric(targetScoreString))
+        {
+            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            return null;
+        }
+
+        const targetScore = Number(targetScoreString);
+
+        if(targetScore < 20 || targetScore > 200)
+        {
+            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            return null;
+        }
+
+        return new StartGameInfo(nameOfPlayer1, nameOfPlayer2, targetScore);
     }
 }
