@@ -82,6 +82,11 @@ var GameManager = (function () {
         this.SwitchPlayer();
     };
     GameManager.ReloadStoredState = function () {
+        if (!LocalStorageManager.IsStorageVersionUpToDate()) {
+            alert("Der gespeicherte Zustand ist nicht mit der aktuellen Version kompatibel.");
+            LocalStorageManager.Clear();
+        }
+        LocalStorageManager.StoreStorageVersion();
         this.ShowViewDependingOnGameState();
         if (!LocalStorageManager.IsGameInProgress()) {
             return;
@@ -343,8 +348,10 @@ var LocalStorageConstants = (function () {
     LocalStorageConstants.ActivePlayerKey = "active_player";
     LocalStorageConstants.RemainingBallsOnTableKey = "remaining_balls";
     LocalStorageConstants.GameStateKey = "game_state";
+    LocalStorageConstants.StorageVersionKey = "storage_verison";
     LocalStorageConstants.GameStateInProgress = "in_progress";
     LocalStorageConstants.GameStateNoGame = "no_game";
+    LocalStorageConstants.StorageVersion = "0";
     return LocalStorageConstants;
 }());
 var LocalStorageManager = (function () {
@@ -429,6 +436,19 @@ var LocalStorageManager = (function () {
     };
     LocalStorageManager.IsGameInProgress = function () {
         return localStorage.getItem(LocalStorageConstants.GameStateKey) === LocalStorageConstants.GameStateInProgress;
+    };
+    LocalStorageManager.StoreStorageVersion = function () {
+        localStorage.setItem(LocalStorageConstants.StorageVersionKey, LocalStorageConstants.StorageVersion);
+    };
+    LocalStorageManager.IsStorageVersionUpToDate = function () {
+        var storageVersion = localStorage.getItem(LocalStorageConstants.StorageVersionKey);
+        if (storageVersion === null || storageVersion === "") {
+            return true;
+        }
+        return storageVersion === LocalStorageConstants.StorageVersion;
+    };
+    LocalStorageManager.Clear = function () {
+        localStorage.clear();
     };
     return LocalStorageManager;
 }());

@@ -130,4 +130,26 @@ class LocalStorageManager
     {
         return localStorage.getItem(LocalStorageConstants.GameStateKey) === LocalStorageConstants.GameStateInProgress;
     }
+
+    public static StoreStorageVersion()
+    {
+        localStorage.setItem(LocalStorageConstants.StorageVersionKey, LocalStorageConstants.StorageVersion)
+    }
+
+    public static IsStorageVersionUpToDate()
+    {
+        const storageVersion = localStorage.getItem(LocalStorageConstants.StorageVersionKey);
+
+        if(storageVersion === null || storageVersion === "")
+        {
+            return true;
+        }
+
+        return storageVersion === LocalStorageConstants.StorageVersion;
+    }
+
+    public static Clear()
+    {
+        localStorage.clear();
+    }
 }

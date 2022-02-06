@@ -16,7 +16,10 @@ class LocalStorageConstants
     public static readonly ActivePlayerKey = "active_player";
     public static readonly RemainingBallsOnTableKey = "remaining_balls";
     public static readonly GameStateKey = "game_state";
+    public static readonly StorageVersionKey = "storage_verison";
     
     public static readonly GameStateInProgress = "in_progress";
     public static readonly GameStateNoGame = "no_game";
+
+    public static readonly StorageVersion = "0";
 }

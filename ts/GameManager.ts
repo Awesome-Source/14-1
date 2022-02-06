@@ -116,6 +116,13 @@ class GameManager
 
     public static ReloadStoredState()
     {
+        if(!LocalStorageManager.IsStorageVersionUpToDate())
+        {
+            alert("Der gespeicherte Zustand ist nicht mit der aktuellen Version kompatibel.");
+            LocalStorageManager.Clear();
+        }
+
+        LocalStorageManager.StoreStorageVersion();
         this.ShowViewDependingOnGameState();
 
         if(!LocalStorageManager.IsGameInProgress())
