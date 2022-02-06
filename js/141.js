@@ -7,6 +7,7 @@ var GameManager = (function () {
     };
     GameManager.CreateNewGame = function () {
         this.ResetGame();
+        GameViewManager.UnlockControls();
         var startGameInfo = GameViewManager.ExtractStartGameInfo();
         if (startGameInfo === null) {
             return;
@@ -171,10 +172,12 @@ var GameManager = (function () {
     };
     GameManager.CheckWinCondition = function (remainingBallsOfPlayer1, remainingBallsOfPlayer2) {
         if (remainingBallsOfPlayer1 === 0) {
-            alert(LocalStorageManager.GetPlayerName(PlayerConstants.Player1) + " hat das Spiel gewonnen.");
+            var nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
+            GameViewManager.ShowWinDialog(nameOfPlayer1);
         }
         if (remainingBallsOfPlayer2 === 0) {
-            alert(LocalStorageManager.GetPlayerName(PlayerConstants.Player2) + " hat das Spiel gewonnen.");
+            var nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
+            GameViewManager.ShowWinDialog(nameOfPlayer2);
         }
     };
     return GameManager;
@@ -247,6 +250,23 @@ var GameViewManager = (function () {
     GameViewManager.ShowMenuView = function () {
         HtmlUtils.ShowElementById("menu_view");
         HtmlUtils.HideElementById("game_view");
+    };
+    GameViewManager.ShowWinDialog = function (nameOfWinner) {
+        HtmlUtils.SetInnerHtmlById("win_dialog_text", nameOfWinner + " hat das Spiel gewonnen.");
+        this.SetVisibilityOfElement("win_dialog", true);
+        this.LockControls();
+    };
+    GameViewManager.LockControls = function () {
+        var controls = this.GetLockableButtons();
+        controls.forEach(function (c) { return c.disabled = true; });
+    };
+    GameViewManager.UnlockControls = function () {
+        var controls = this.GetLockableButtons();
+        controls.forEach(function (c) { return c.disabled = false; });
+    };
+    GameViewManager.GetLockableButtons = function () {
+        var classNames = [".switch-player", ".remaining-balls", ".new-rack", ".minus", ".plus", ".foul"];
+        return classNames.map(function (cn) { return document.querySelector(cn); });
     };
     GameViewManager.ExtractStartGameInfo = function () {
         var nameOfPlayer1 = HtmlUtils.GetInputFromElementWithId("menu_player1_name");

@@ -92,6 +92,32 @@ class GameViewManager
         HtmlUtils.HideElementById("game_view");
     }
 
+    public static ShowWinDialog(nameOfWinner: string)
+    {
+        HtmlUtils.SetInnerHtmlById("win_dialog_text", nameOfWinner + " hat das Spiel gewonnen.")
+        this.SetVisibilityOfElement("win_dialog", true);
+        this.LockControls();
+    }
+
+    private static LockControls()
+    {
+        const controls = this.GetLockableButtons();
+        controls.forEach(c => c.disabled = true);
+    }
+
+    public static UnlockControls()
+    {
+        const controls = this.GetLockableButtons();
+        controls.forEach(c => c.disabled = false);
+    }
+
+    private static GetLockableButtons()
+    {
+        const classNames = [".switch-player", ".remaining-balls", /*"undo",*/ ".new-rack", ".minus", ".plus", ".foul"];
+
+        return classNames.map(cn => <HTMLButtonElement> document.querySelector(cn));
+    }
+
     public static ExtractStartGameInfo()
     {
         const nameOfPlayer1 = HtmlUtils.GetInputFromElementWithId("menu_player1_name");

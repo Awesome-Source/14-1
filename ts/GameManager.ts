@@ -9,6 +9,7 @@ class GameManager
     public static CreateNewGame()
     {
         this.ResetGame();
+        GameViewManager.UnlockControls();
         const startGameInfo = GameViewManager.ExtractStartGameInfo();
         
         if(startGameInfo === null)
@@ -58,7 +59,7 @@ class GameManager
 
     public static Undo()
     {
-        //TODO implement
+        //TODO implement (remember to lock / unlock the button)
     }
 
     public static NewRack()
@@ -237,16 +238,16 @@ class GameManager
 
     public static CheckWinCondition(remainingBallsOfPlayer1: number, remainingBallsOfPlayer2: number)
     {
-        //TODO lock controls so no further game changing input can be made until the game is restarted.
-
         if(remainingBallsOfPlayer1 === 0)
         {
-            alert(LocalStorageManager.GetPlayerName(PlayerConstants.Player1) + " hat das Spiel gewonnen.");
+            const nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
+            GameViewManager.ShowWinDialog(nameOfPlayer1);
         }
 
         if(remainingBallsOfPlayer2 === 0)
         {
-            alert(LocalStorageManager.GetPlayerName(PlayerConstants.Player2) + " hat das Spiel gewonnen.");
+            const nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
+            GameViewManager.ShowWinDialog(nameOfPlayer2);
         }
     }
 }
