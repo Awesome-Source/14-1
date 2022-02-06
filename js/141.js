@@ -1,29 +1,46 @@
+var ActionIds = (function () {
+    function ActionIds() {
+    }
+    ActionIds.Switch = 0;
+    ActionIds.SetRemainingBalls = 1;
+    ActionIds.Foul = 2;
+    ActionIds.NewRack = 3;
+    return ActionIds;
+}());
+var GameAction = (function () {
+    function GameAction(Id, Context) {
+        this.Id = Id;
+        this.Context = Context;
+    }
+    return GameAction;
+}());
 var GameManager = (function () {
     function GameManager() {
     }
     GameManager.ReturnToMenu = function () {
-        LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateNoGame);
-        this.ShowViewDependingOnGameState();
+        LocalStorageManager.StoreActiveView(LocalStorageConstants.MenuView);
+        this.ShowActiveView();
     };
     GameManager.CreateNewGame = function () {
-        this.SetActivePlayer(PlayerConstants.Player1);
-        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(15);
-        GameViewManager.UnlockControls();
+        LocalStorageManager.StoreActions([]);
         var startGameInfo = GameViewManager.ExtractStartGameInfo();
         if (startGameInfo === null) {
             return;
         }
+        var gameState = new GameState(PlayerConstants.Player1, startGameInfo.TargetScore, 15);
+        LocalStorageManager.StoreGameState(gameState);
+        GameViewManager.HighlightActivePlayer(PlayerConstants.Player1);
+        GameViewManager.UnlockControls();
         var player1State = new PlayerState(startGameInfo.NameOfPlayer1);
         var player2State = new PlayerState(startGameInfo.NameOfPlayer2);
         player1State.Take = 1;
         LocalStorageManager.StorePlayerState(PlayerConstants.Player1, player1State);
         LocalStorageManager.StorePlayerState(PlayerConstants.Player2, player2State);
-        LocalStorageManager.StoreTargetScore(startGameInfo.TargetScore);
-        LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateInProgress);
+        LocalStorageManager.StoreActiveView(LocalStorageConstants.GameView);
         this.ReloadStoredState();
-        this.ShowViewDependingOnGameState();
+        this.ShowActiveView();
     };
-    GameManager.ShowViewDependingOnGameState = function () {
+    GameManager.ShowActiveView = function () {
         var isGameInProgress = LocalStorageManager.IsGameInProgress();
         if (isGameInProgress) {
             GameViewManager.ShowGameView();
@@ -33,7 +50,8 @@ var GameManager = (function () {
         }
     };
     GameManager.SwitchPlayer = function () {
-        var activePlayer = LocalStorageManager.GetActivePlayer();
+        var gameState = LocalStorageManager.GetGameState();
+        var activePlayer = gameState.ActivePlayer;
         var nextPlayer = activePlayer === PlayerConstants.Player1 ? PlayerConstants.Player2 : PlayerConstants.Player1;
         var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
         var nextPlayerState = LocalStorageManager.GetPlayerState(nextPlayer);
@@ -44,16 +62,38 @@ var GameManager = (function () {
         LocalStorageManager.StorePlayerState(nextPlayer, nextPlayerState);
         this.SetActivePlayer(nextPlayer);
         this.UpdateView();
+        this.RecordAction(ActionIds.Switch, 0);
     };
     GameManager.Undo = function () {
+        var actions = LocalStorageManager.GetActions();
+        actions.pop();
+        this.ReplayActions(actions);
+        LocalStorageManager.StoreActions(actions);
+    };
+    GameManager.ReplayActions = function (actions) {
+        for (var i = 0; i < actions.length; i++) {
+            var currentAction = actions[i];
+            switch (currentAction.Id) {
+                case ActionIds.Switch:
+                    break;
+                case ActionIds.SetRemainingBalls:
+                    break;
+                case ActionIds.Foul:
+                    break;
+                case ActionIds.NewRack:
+                    break;
+            }
+        }
     };
     GameManager.NewRack = function () {
-        this.ChangePlayerScore(LocalStorageManager.GetActivePlayer(), 14);
+        var gameState = LocalStorageManager.GetGameState();
+        this.ChangePlayerScore(gameState.ActivePlayer, 14);
         this.UpdateView();
+        this.RecordAction(ActionIds.NewRack, 0);
     };
     GameManager.Foul = function () {
-        var activePlayer = LocalStorageManager.GetActivePlayer();
-        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        var gameState = LocalStorageManager.GetGameState();
+        var activePlayerState = LocalStorageManager.GetPlayerState(gameState.ActivePlayer);
         if (activePlayerState.Take === 1) {
             GameViewManager.SetVisibilityOfElement("break_foul_dialog", true);
             return;
@@ -61,26 +101,27 @@ var GameManager = (function () {
         this.HandleNormalFoul();
     };
     GameManager.HandleBreakFoul = function () {
-        var activePlayer = LocalStorageManager.GetActivePlayer();
-        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        var gameState = LocalStorageManager.GetGameState();
+        var activePlayerState = LocalStorageManager.GetPlayerState(gameState.ActivePlayer);
         activePlayerState.FoulCount += 1;
-        this.ApplyFoulPoints(activePlayer, activePlayerState, -2);
+        this.ApplyFoulPoints(gameState.ActivePlayer, activePlayerState, -2);
     };
     GameManager.HandleNormalFoul = function () {
-        var activePlayer = LocalStorageManager.GetActivePlayer();
-        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        var gameState = LocalStorageManager.GetGameState();
+        var activePlayerState = LocalStorageManager.GetPlayerState(gameState.ActivePlayer);
         activePlayerState.FoulCount += 1;
         if (activePlayerState.FoulCount % 3 === 0) {
-            this.ApplyFoulPoints(activePlayer, activePlayerState, -16);
+            this.ApplyFoulPoints(gameState.ActivePlayer, activePlayerState, -16);
             return;
         }
-        this.ApplyFoulPoints(activePlayer, activePlayerState, -1);
+        this.ApplyFoulPoints(gameState.ActivePlayer, activePlayerState, -1);
     };
     GameManager.ApplyFoulPoints = function (activePlayer, playerState, negativePoints) {
         playerState.CurrentScore += negativePoints;
         LocalStorageManager.StorePlayerState(activePlayer, playerState);
         this.UpdateView();
         this.SwitchPlayer();
+        this.RecordAction(ActionIds.Foul, negativePoints);
     };
     GameManager.ReloadStoredState = function () {
         if (!LocalStorageManager.IsStorageVersionUpToDate()) {
@@ -88,7 +129,7 @@ var GameManager = (function () {
             LocalStorageManager.Clear();
         }
         LocalStorageManager.StoreStorageVersion();
-        this.ShowViewDependingOnGameState();
+        this.ShowActiveView();
         if (!LocalStorageManager.IsGameInProgress()) {
             return;
         }
@@ -96,7 +137,8 @@ var GameManager = (function () {
         var playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
         GameViewManager.UpdatePlayerNames(playerState1.Name, playerState2.Name);
         this.UpdateView();
-        this.SetActivePlayer(LocalStorageManager.GetActivePlayer());
+        var gameState = LocalStorageManager.GetGameState();
+        this.SetActivePlayer(gameState.ActivePlayer);
     };
     GameManager.UpdateHighestSeriesIfNecessary = function (playerState) {
         var currentSeries = playerState.CurrentScore - playerState.PreviousScore;
@@ -105,18 +147,23 @@ var GameManager = (function () {
         }
     };
     GameManager.SetActivePlayer = function (playerLabel) {
-        LocalStorageManager.StoreActivePlayer(playerLabel);
+        var gameState = LocalStorageManager.GetGameState();
+        gameState.ActivePlayer = playerLabel;
+        LocalStorageManager.StoreGameState(gameState);
         GameViewManager.HighlightActivePlayer(playerLabel);
     };
     GameManager.SetRemainingBalls = function (remainingBalls) {
-        var remainingBallsBefore = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        var gameState = LocalStorageManager.GetGameState();
+        var remainingBallsBefore = gameState.RemainingBallsOnTable;
         var delta = remainingBallsBefore - remainingBalls;
-        this.ChangePlayerScore(LocalStorageManager.GetActivePlayer(), delta);
+        this.ChangePlayerScore(gameState.ActivePlayer, delta);
         if (remainingBalls === 1 || remainingBalls === 0) {
             remainingBalls = 15;
         }
-        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(remainingBalls);
+        gameState.RemainingBallsOnTable = remainingBalls;
+        LocalStorageManager.StoreGameState(gameState);
         this.UpdateView();
+        this.RecordAction(ActionIds.SetRemainingBalls, delta);
     };
     GameManager.ChangePlayerScore = function (playerLabel, delta) {
         var playerState = LocalStorageManager.GetPlayerState(playerLabel);
@@ -127,7 +174,8 @@ var GameManager = (function () {
         LocalStorageManager.StorePlayerState(playerLabel, playerState);
     };
     GameManager.ChangeAmountOfRemainingBalls = function (delta) {
-        var remainingBallsBefore = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        var gameState = LocalStorageManager.GetGameState();
+        var remainingBallsBefore = gameState.RemainingBallsOnTable;
         var remainingBalls = remainingBallsBefore + delta;
         if (remainingBalls > 15) {
             return;
@@ -135,13 +183,12 @@ var GameManager = (function () {
         this.SetRemainingBalls(remainingBalls);
     };
     GameManager.UpdateView = function () {
-        var targetScore = LocalStorageManager.GetTargetScore();
-        var remainingBallsOnTable = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        var gameState = LocalStorageManager.GetGameState();
         var playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
         var playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
-        GameViewManager.SetRemainingBallsOnTableDisplayValue(remainingBallsOnTable);
-        this.UpdateViewForPlayer(PlayerConstants.Player1, playerState1, targetScore);
-        this.UpdateViewForPlayer(PlayerConstants.Player2, playerState2, targetScore);
+        GameViewManager.SetRemainingBallsOnTableDisplayValue(gameState.RemainingBallsOnTable);
+        this.UpdateViewForPlayer(PlayerConstants.Player1, playerState1, gameState.TargetScore);
+        this.UpdateViewForPlayer(PlayerConstants.Player2, playerState2, gameState.TargetScore);
     };
     GameManager.UpdateViewForPlayer = function (playerLabel, playerState, targetScore) {
         var remainingBalls = Math.max(0, targetScore - playerState.CurrentScore);
@@ -153,7 +200,20 @@ var GameManager = (function () {
             GameViewManager.ShowWinDialog(playerState.Name);
         }
     };
+    GameManager.RecordAction = function (actionId, actionContext) {
+        var actions = LocalStorageManager.GetActions();
+        actions.push(new GameAction(actionId, actionContext));
+        LocalStorageManager.StoreActions(actions);
+    };
     return GameManager;
+}());
+var GameState = (function () {
+    function GameState(ActivePlayer, TargetScore, RemainingBallsOnTable) {
+        this.ActivePlayer = ActivePlayer;
+        this.TargetScore = TargetScore;
+        this.RemainingBallsOnTable = RemainingBallsOnTable;
+    }
+    return GameState;
 }());
 var GameViewManager = (function () {
     function GameViewManager() {
@@ -288,55 +348,28 @@ var LocalStorageConstants = (function () {
     }
     LocalStorageConstants.Player1StateKey = "player1_state";
     LocalStorageConstants.Player2StateKey = "player2_state";
-    LocalStorageConstants.Player1NameKey = "player1_name";
-    LocalStorageConstants.Player2NameKey = "player2_name";
-    LocalStorageConstants.Player1ScoreKey = "player1_score";
-    LocalStorageConstants.Player2ScoreKey = "player2_score";
-    LocalStorageConstants.Player1PreviousScoreKey = "player1_previous_score";
-    LocalStorageConstants.Player2PreviousScoreKey = "player2_previous_score";
-    LocalStorageConstants.Player1HighestSeriesKey = "player1_highest_series";
-    LocalStorageConstants.Player2HighestSeriesKey = "player2_highest_series";
-    LocalStorageConstants.Player1TakeKey = "player1_take";
-    LocalStorageConstants.Player2TakeKey = "player2_take";
-    LocalStorageConstants.Player1FoulsKey = "player1_fouls";
-    LocalStorageConstants.Player2FoulsKey = "player2_fouls";
-    LocalStorageConstants.TargetScoreKey = "target_score";
-    LocalStorageConstants.ActivePlayerKey = "active_player";
-    LocalStorageConstants.RemainingBallsOnTableKey = "remaining_balls";
     LocalStorageConstants.GameStateKey = "game_state";
+    LocalStorageConstants.ActionsKey = "actions";
+    LocalStorageConstants.ActiveViewKey = "active_view";
     LocalStorageConstants.StorageVersionKey = "storage_verison";
-    LocalStorageConstants.GameStateInProgress = "in_progress";
-    LocalStorageConstants.GameStateNoGame = "no_game";
-    LocalStorageConstants.StorageVersion = "0.1";
+    LocalStorageConstants.GameView = "game_view";
+    LocalStorageConstants.MenuView = "menu_view";
+    LocalStorageConstants.StorageVersion = "0.3";
     return LocalStorageConstants;
 }());
 var LocalStorageManager = (function () {
     function LocalStorageManager() {
     }
-    LocalStorageManager.GetStoredNumber = function (key) {
-        var value = localStorage.getItem(key);
-        return Number(value);
-    };
-    LocalStorageManager.GetTargetScore = function () {
-        return this.GetStoredNumber(LocalStorageConstants.TargetScoreKey);
-    };
-    LocalStorageManager.GetActivePlayer = function () {
-        return localStorage.getItem(LocalStorageConstants.ActivePlayerKey);
-    };
-    LocalStorageManager.StoreActivePlayer = function (playerLabel) {
-        localStorage.setItem(LocalStorageConstants.ActivePlayerKey, playerLabel);
-    };
-    LocalStorageManager.GetAmountOfRemainingBallsOnTable = function () {
-        return this.GetStoredNumber(LocalStorageConstants.RemainingBallsOnTableKey);
-    };
-    LocalStorageManager.StoreAmountOfRemainingBallsOnTable = function (remainingBalls) {
-        localStorage.setItem(LocalStorageConstants.RemainingBallsOnTableKey, "" + remainingBalls);
-    };
-    LocalStorageManager.StoreTargetScore = function (targetScore) {
-        localStorage.setItem(LocalStorageConstants.TargetScoreKey, "" + targetScore);
-    };
     LocalStorageManager.StoreGameState = function (gameState) {
-        localStorage.setItem(LocalStorageConstants.GameStateKey, gameState);
+        var json = JSON.stringify(gameState);
+        localStorage.setItem(LocalStorageConstants.GameStateKey, json);
+    };
+    LocalStorageManager.GetGameState = function () {
+        var json = localStorage.getItem(LocalStorageConstants.GameStateKey);
+        return JSON.parse(json);
+    };
+    LocalStorageManager.StoreActiveView = function (viewId) {
+        localStorage.setItem(LocalStorageConstants.ActiveViewKey, viewId);
     };
     LocalStorageManager.StorePlayerState = function (playerLabel, playerInfo) {
         var storageKey = playerLabel == PlayerConstants.Player1 ? LocalStorageConstants.Player1StateKey : LocalStorageConstants.Player2StateKey;
@@ -347,8 +380,16 @@ var LocalStorageManager = (function () {
         var json = localStorage.getItem(storageKey);
         return JSON.parse(json);
     };
+    LocalStorageManager.GetActions = function () {
+        var json = localStorage.getItem(LocalStorageConstants.ActionsKey);
+        return JSON.parse(json);
+    };
+    LocalStorageManager.StoreActions = function (actions) {
+        var json = JSON.stringify(actions);
+        localStorage.setItem(LocalStorageConstants.ActionsKey, json);
+    };
     LocalStorageManager.IsGameInProgress = function () {
-        return localStorage.getItem(LocalStorageConstants.GameStateKey) === LocalStorageConstants.GameStateInProgress;
+        return localStorage.getItem(LocalStorageConstants.ActiveViewKey) === LocalStorageConstants.GameView;
     };
     LocalStorageManager.StoreStorageVersion = function () {
         localStorage.setItem(LocalStorageConstants.StorageVersionKey, LocalStorageConstants.StorageVersion);

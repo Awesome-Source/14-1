@@ -2,15 +2,13 @@ class GameManager
 {
     public static ReturnToMenu()
     {
-        LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateNoGame);
-        this.ShowViewDependingOnGameState();
+        LocalStorageManager.StoreActiveView(LocalStorageConstants.MenuView);
+        this.ShowActiveView();
     }
 
     public static CreateNewGame()
     {
-        this.SetActivePlayer(PlayerConstants.Player1);
-        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(15);
-        GameViewManager.UnlockControls();
+        LocalStorageManager.StoreActions([]);
         const startGameInfo = GameViewManager.ExtractStartGameInfo();
         
         if(startGameInfo === null)
@@ -18,20 +16,24 @@ class GameManager
             return;
         }
 
+        const gameState = new GameState(PlayerConstants.Player1, startGameInfo.TargetScore, 15);
+        LocalStorageManager.StoreGameState(gameState);
+
+        GameViewManager.HighlightActivePlayer(PlayerConstants.Player1);  
+        GameViewManager.UnlockControls();
+
         const player1State = new PlayerState(startGameInfo.NameOfPlayer1);
         const player2State = new PlayerState(startGameInfo.NameOfPlayer2);
         player1State.Take = 1;
         LocalStorageManager.StorePlayerState(PlayerConstants.Player1, player1State);
         LocalStorageManager.StorePlayerState(PlayerConstants.Player2, player2State);
-
-        LocalStorageManager.StoreTargetScore(startGameInfo.TargetScore);
-        LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateInProgress);
+        LocalStorageManager.StoreActiveView(LocalStorageConstants.GameView);
 
         this.ReloadStoredState();
-        this.ShowViewDependingOnGameState();
+        this.ShowActiveView();
     }
 
-    public static ShowViewDependingOnGameState()
+    public static ShowActiveView()
     {
         let isGameInProgress = LocalStorageManager.IsGameInProgress();
 
@@ -47,7 +49,8 @@ class GameManager
 
     public static SwitchPlayer()
     {
-        const activePlayer = LocalStorageManager.GetActivePlayer();
+        const gameState = LocalStorageManager.GetGameState();
+        const activePlayer = gameState.ActivePlayer;
         const nextPlayer = activePlayer === PlayerConstants.Player1 ? PlayerConstants.Player2 : PlayerConstants.Player1;
 
         const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
@@ -60,23 +63,56 @@ class GameManager
         LocalStorageManager.StorePlayerState(nextPlayer, nextPlayerState);
         this.SetActivePlayer(nextPlayer);
         this.UpdateView();
+        this.RecordAction(ActionIds.Switch, 0);
     }
 
     public static Undo()
     {
-        //TODO implement (remember to lock / unlock the button)
+        const actions = LocalStorageManager.GetActions();
+        actions.pop();
+        this.ReplayActions(actions);
+        LocalStorageManager.StoreActions(actions);
+    }
+
+    private static ReplayActions(actions: GameAction[])
+    {
+        /*const playerState1Before = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
+        const playerState2Before = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
+        const gameStateBefore = LocalStorageManager.GetGameState();
+
+        const playerState1 = new PlayerState(playerState1Before.Name);
+        const playerState2 = new PlayerState(playerState2Before.Name);
+        const gameState = new GameState(PlayerConstants.Player1, gameStateBefore.TargetScore, 15);*/
+
+        for(let i = 0; i < actions.length; i++)
+        {
+            const currentAction = actions[i];
+            switch(currentAction.Id)
+            {
+                case ActionIds.Switch:
+                    break;
+                case ActionIds.SetRemainingBalls:
+                    break;
+                case ActionIds.Foul:
+                    break;
+                case ActionIds.NewRack:
+                    break;
+            }
+        }        
     }
 
     public static NewRack()
     {
-        this.ChangePlayerScore(LocalStorageManager.GetActivePlayer(), 14);
+        const gameState = LocalStorageManager.GetGameState();
+        this.ChangePlayerScore(gameState.ActivePlayer, 14);
         this.UpdateView();
+        this.RecordAction(ActionIds.NewRack, 0);
     }
 
     public static Foul()
     {
-        const activePlayer = LocalStorageManager.GetActivePlayer();
-        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        const gameState = LocalStorageManager.GetGameState();
+        const activePlayerState = LocalStorageManager.GetPlayerState(gameState.ActivePlayer);
 
         if(activePlayerState.Take === 1)
         {
@@ -89,25 +125,25 @@ class GameManager
 
     public static HandleBreakFoul()
     {
-        const activePlayer = LocalStorageManager.GetActivePlayer();
-        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        const gameState = LocalStorageManager.GetGameState();
+        const activePlayerState = LocalStorageManager.GetPlayerState(gameState.ActivePlayer);
         activePlayerState.FoulCount += 1;
-        this.ApplyFoulPoints(activePlayer, activePlayerState, -2);
+        this.ApplyFoulPoints(gameState.ActivePlayer, activePlayerState, -2);
     }
 
     public static HandleNormalFoul()
     {
-        const activePlayer = LocalStorageManager.GetActivePlayer();
-        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        const gameState = LocalStorageManager.GetGameState();
+        const activePlayerState = LocalStorageManager.GetPlayerState(gameState.ActivePlayer);
         activePlayerState.FoulCount += 1;
 
         if(activePlayerState.FoulCount % 3 === 0)
         {
-            this.ApplyFoulPoints(activePlayer, activePlayerState, -16);
+            this.ApplyFoulPoints(gameState.ActivePlayer, activePlayerState, -16);
             return;
         }
 
-        this.ApplyFoulPoints(activePlayer, activePlayerState, -1);  
+        this.ApplyFoulPoints(gameState.ActivePlayer, activePlayerState, -1);  
     }
 
     public static ApplyFoulPoints(activePlayer: string, playerState: PlayerState, negativePoints: number)
@@ -116,6 +152,7 @@ class GameManager
         LocalStorageManager.StorePlayerState(activePlayer, playerState);
         this.UpdateView();
         this.SwitchPlayer();
+        this.RecordAction(ActionIds.Foul, negativePoints);
     }
 
     public static ReloadStoredState()
@@ -127,7 +164,7 @@ class GameManager
         }
 
         LocalStorageManager.StoreStorageVersion();
-        this.ShowViewDependingOnGameState();
+        this.ShowActiveView();
 
         if(!LocalStorageManager.IsGameInProgress())
         {
@@ -137,8 +174,9 @@ class GameManager
         const playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
         const playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
         GameViewManager.UpdatePlayerNames(playerState1.Name, playerState2.Name);
-        this.UpdateView();        
-        this.SetActivePlayer(LocalStorageManager.GetActivePlayer());
+        this.UpdateView();
+        const gameState = LocalStorageManager.GetGameState();
+        this.SetActivePlayer(gameState.ActivePlayer);
     }
 
     public static UpdateHighestSeriesIfNecessary(playerState: PlayerState)
@@ -153,24 +191,29 @@ class GameManager
 
     public static SetActivePlayer(playerLabel: string)
     {
-        LocalStorageManager.StoreActivePlayer(playerLabel);
+        const gameState = LocalStorageManager.GetGameState();
+        gameState.ActivePlayer = playerLabel;
+        LocalStorageManager.StoreGameState(gameState);
         GameViewManager.HighlightActivePlayer(playerLabel);  
     }
 
     public static SetRemainingBalls(remainingBalls: number)
     {
-        const remainingBallsBefore = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        const gameState = LocalStorageManager.GetGameState();
+        const remainingBallsBefore = gameState.RemainingBallsOnTable;
         
         const delta = remainingBallsBefore - remainingBalls;
-        this.ChangePlayerScore(LocalStorageManager.GetActivePlayer(), delta);
+        this.ChangePlayerScore(gameState.ActivePlayer, delta);
         
         if(remainingBalls === 1 || remainingBalls === 0)
         {
             remainingBalls = 15;
         }
 
-        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(remainingBalls);
+        gameState.RemainingBallsOnTable = remainingBalls;
+        LocalStorageManager.StoreGameState(gameState)
         this.UpdateView();
+        this.RecordAction(ActionIds.SetRemainingBalls, delta);
     }
 
     public static ChangePlayerScore(playerLabel: string, delta: number)
@@ -188,7 +231,8 @@ class GameManager
 
     public static ChangeAmountOfRemainingBalls(delta: number)
     {
-        const remainingBallsBefore = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        const gameState = LocalStorageManager.GetGameState();
+        const remainingBallsBefore = gameState.RemainingBallsOnTable;
         const remainingBalls = remainingBallsBefore + delta;
 
         if(remainingBalls > 15)
@@ -201,15 +245,14 @@ class GameManager
 
     public static UpdateView()
     {
-        const targetScore = LocalStorageManager.GetTargetScore();
-        const remainingBallsOnTable = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        const gameState = LocalStorageManager.GetGameState();
         const playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
         const playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);        
 
-        GameViewManager.SetRemainingBallsOnTableDisplayValue(remainingBallsOnTable);
+        GameViewManager.SetRemainingBallsOnTableDisplayValue(gameState.RemainingBallsOnTable);
 
-        this.UpdateViewForPlayer(PlayerConstants.Player1, playerState1, targetScore)
-        this.UpdateViewForPlayer(PlayerConstants.Player2, playerState2, targetScore)
+        this.UpdateViewForPlayer(PlayerConstants.Player1, playerState1, gameState.TargetScore)
+        this.UpdateViewForPlayer(PlayerConstants.Player2, playerState2, gameState.TargetScore)
     }
 
     private static UpdateViewForPlayer(playerLabel: string, playerState: PlayerState, targetScore: number)
@@ -225,5 +268,12 @@ class GameManager
         {
             GameViewManager.ShowWinDialog(playerState.Name);
         }
+    }
+
+    private static RecordAction(actionId: number, actionContext: number)
+    {
+        const actions = LocalStorageManager.GetActions();
+        actions.push(new GameAction(actionId, actionContext));
+        LocalStorageManager.StoreActions(actions);
     }
 }
