@@ -1,5 +1,7 @@
 class LocalStorageConstants
 {
+    public static readonly Player1StateKey = "player1_state";
+    public static readonly Player2StateKey = "player2_state";
     public static readonly Player1NameKey = "player1_name";
     public static readonly Player2NameKey = "player2_name";
     public static readonly Player1ScoreKey = "player1_score";
@@ -21,5 +23,5 @@ class LocalStorageConstants
     public static readonly GameStateInProgress = "in_progress";
     public static readonly GameStateNoGame = "no_game";
 
-    public static readonly StorageVersion = "0";
+    public static readonly StorageVersion = "0.1";
 }

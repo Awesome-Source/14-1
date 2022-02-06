@@ -6,20 +6,20 @@ var GameManager = (function () {
         this.ShowViewDependingOnGameState();
     };
     GameManager.CreateNewGame = function () {
-        this.ResetGame();
+        this.SetActivePlayer(PlayerConstants.Player1);
+        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(15);
         GameViewManager.UnlockControls();
         var startGameInfo = GameViewManager.ExtractStartGameInfo();
         if (startGameInfo === null) {
             return;
         }
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player1, startGameInfo.NameOfPlayer1);
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player2, startGameInfo.NameOfPlayer2);
+        var player1State = new PlayerState(startGameInfo.NameOfPlayer1);
+        var player2State = new PlayerState(startGameInfo.NameOfPlayer2);
+        player1State.Take = 1;
+        LocalStorageManager.StorePlayerState(PlayerConstants.Player1, player1State);
+        LocalStorageManager.StorePlayerState(PlayerConstants.Player2, player2State);
         LocalStorageManager.StoreTargetScore(startGameInfo.TargetScore);
         LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateInProgress);
-        LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player2, 0);
-        LocalStorageManager.StoreTakeOfPlayer(PlayerConstants.Player1, 1);
-        LocalStorageManager.StoreTakeOfPlayer(PlayerConstants.Player2, 0);
         this.ReloadStoredState();
         this.ShowViewDependingOnGameState();
     };
@@ -35,13 +35,15 @@ var GameManager = (function () {
     GameManager.SwitchPlayer = function () {
         var activePlayer = LocalStorageManager.GetActivePlayer();
         var nextPlayer = activePlayer === PlayerConstants.Player1 ? PlayerConstants.Player2 : PlayerConstants.Player1;
-        this.UpdateHighestSeriesIfNecessary(activePlayer);
-        LocalStorageManager.StorePreviousScoreOfPlayer(activePlayer, LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer));
+        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        var nextPlayerState = LocalStorageManager.GetPlayerState(nextPlayer);
+        this.UpdateHighestSeriesIfNecessary(activePlayerState);
+        activePlayerState.PreviousScore = activePlayerState.CurrentScore;
+        nextPlayerState.Take += 1;
+        LocalStorageManager.StorePlayerState(activePlayer, activePlayerState);
+        LocalStorageManager.StorePlayerState(nextPlayer, nextPlayerState);
         this.SetActivePlayer(nextPlayer);
-        var takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(nextPlayer);
-        LocalStorageManager.StoreTakeOfPlayer(nextPlayer, takeOfPlayer + 1);
         this.UpdateView();
-        GameViewManager.UpdateSeriesCounter(nextPlayer, 0);
     };
     GameManager.Undo = function () {
     };
@@ -51,8 +53,8 @@ var GameManager = (function () {
     };
     GameManager.Foul = function () {
         var activePlayer = LocalStorageManager.GetActivePlayer();
-        var takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(activePlayer);
-        if (takeOfPlayer === 1) {
+        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        if (activePlayerState.Take === 1) {
             GameViewManager.SetVisibilityOfElement("break_foul_dialog", true);
             return;
         }
@@ -60,24 +62,23 @@ var GameManager = (function () {
     };
     GameManager.HandleBreakFoul = function () {
         var activePlayer = LocalStorageManager.GetActivePlayer();
-        var foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
-        foulCount++;
-        this.ApplyFoulPoints(activePlayer, foulCount, -2);
+        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        activePlayerState.FoulCount += 1;
+        this.ApplyFoulPoints(activePlayer, activePlayerState, -2);
     };
     GameManager.HandleNormalFoul = function () {
         var activePlayer = LocalStorageManager.GetActivePlayer();
-        var foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
-        foulCount++;
-        if (foulCount % 3 === 0) {
-            this.ApplyFoulPoints(activePlayer, foulCount, -16);
+        var activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        activePlayerState.FoulCount += 1;
+        if (activePlayerState.FoulCount % 3 === 0) {
+            this.ApplyFoulPoints(activePlayer, activePlayerState, -16);
             return;
         }
-        this.ApplyFoulPoints(activePlayer, foulCount, -1);
+        this.ApplyFoulPoints(activePlayer, activePlayerState, -1);
     };
-    GameManager.ApplyFoulPoints = function (activePlayer, foulCount, negativePoints) {
-        var currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
-        LocalStorageManager.StoreFoulCountOfPlayer(activePlayer, foulCount);
-        LocalStorageManager.StoreCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
+    GameManager.ApplyFoulPoints = function (activePlayer, playerState, negativePoints) {
+        playerState.CurrentScore += negativePoints;
+        LocalStorageManager.StorePlayerState(activePlayer, playerState);
         this.UpdateView();
         this.SwitchPlayer();
     };
@@ -91,29 +92,16 @@ var GameManager = (function () {
         if (!LocalStorageManager.IsGameInProgress()) {
             return;
         }
-        var nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
-        var nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
-        GameViewManager.UpdatePlayerNames(nameOfPlayer1, nameOfPlayer2);
+        var playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
+        var playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
+        GameViewManager.UpdatePlayerNames(playerState1.Name, playerState2.Name);
         this.UpdateView();
         this.SetActivePlayer(LocalStorageManager.GetActivePlayer());
     };
-    GameManager.ResetGame = function () {
-        LocalStorageManager.StoreCurrentScoreOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StoreCurrentScoreOfPlayer(PlayerConstants.Player2, 0);
-        LocalStorageManager.StorePreviousScoreOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StorePreviousScoreOfPlayer(PlayerConstants.Player2, 0);
-        LocalStorageManager.StoreHighestSeriesOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StoreHighestSeriesOfPlayer(PlayerConstants.Player2, 0);
-        this.SetActivePlayer(PlayerConstants.Player1);
-        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(15);
-    };
-    GameManager.UpdateHighestSeriesIfNecessary = function (playerLabel) {
-        var previousScore = LocalStorageManager.GetPreviousScoreOfPlayer(playerLabel);
-        var currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(playerLabel);
-        var highestSeriesBefore = LocalStorageManager.GetHighestSeriesOfPlayer(playerLabel);
-        var currentSeries = currentScore - previousScore;
-        if (currentSeries > highestSeriesBefore) {
-            LocalStorageManager.StoreHighestSeriesOfPlayer(playerLabel, currentSeries);
+    GameManager.UpdateHighestSeriesIfNecessary = function (playerState) {
+        var currentSeries = playerState.CurrentScore - playerState.PreviousScore;
+        if (currentSeries > playerState.HighestSeries) {
+            playerState.HighestSeries = currentSeries;
         }
     };
     GameManager.SetActivePlayer = function (playerLabel) {
@@ -131,12 +119,12 @@ var GameManager = (function () {
         this.UpdateView();
     };
     GameManager.ChangePlayerScore = function (playerLabel, delta) {
+        var playerState = LocalStorageManager.GetPlayerState(playerLabel);
         if (delta > 0) {
-            LocalStorageManager.StoreFoulCountOfPlayer(playerLabel, 0);
+            playerState.FoulCount = 0;
         }
-        var playerScore = LocalStorageManager.GetCurrentScoreOfPlayer(playerLabel);
-        playerScore += delta;
-        LocalStorageManager.StoreCurrentScoreOfPlayer(playerLabel, playerScore);
+        playerState.CurrentScore += delta;
+        LocalStorageManager.StorePlayerState(playerLabel, playerState);
     };
     GameManager.ChangeAmountOfRemainingBalls = function (delta) {
         var remainingBallsBefore = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
@@ -148,41 +136,21 @@ var GameManager = (function () {
     };
     GameManager.UpdateView = function () {
         var targetScore = LocalStorageManager.GetTargetScore();
-        var scoreOfPlayer1 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player1);
-        var scoreOfPlayer2 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player2);
-        var previousScoreOfPlayer1 = LocalStorageManager.GetPreviousScoreOfPlayer(PlayerConstants.Player1);
-        var previousScoreOfPlayer2 = LocalStorageManager.GetPreviousScoreOfPlayer(PlayerConstants.Player2);
-        var takeOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
-        var takeOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
-        var highestSeriesOfPlayer1 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player1);
-        var highestSeriesOfPlayer2 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player2);
-        var takesOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
-        var takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
         var remainingBallsOnTable = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
-        var remainingBallsOfPlayer1 = Math.max(0, targetScore - scoreOfPlayer1);
-        var remainingBallsOfPlayer2 = Math.max(0, targetScore - scoreOfPlayer2);
-        var averageOfPlayer1 = scoreOfPlayer1 / Math.max(takeOfPlayer1, 1);
-        var averageOfPlayer2 = scoreOfPlayer2 / Math.max(takeOfPlayer2, 1);
-        var seriesOfPlayer1 = scoreOfPlayer1 - previousScoreOfPlayer1;
-        var seriesOfPlayer2 = scoreOfPlayer2 - previousScoreOfPlayer2;
-        GameViewManager.UpdateRemainingBallsOfPlayerDisplay(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
-        GameViewManager.UpdatePlayerAverageDisplay(averageOfPlayer1, averageOfPlayer2);
-        GameViewManager.UpdateHighestSeriesDisplay(highestSeriesOfPlayer1, highestSeriesOfPlayer2);
-        GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
-        GameViewManager.UpdatePlayerScoreDisplay(scoreOfPlayer1, scoreOfPlayer2);
+        var playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
+        var playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
         GameViewManager.SetRemainingBallsOnTableDisplayValue(remainingBallsOnTable);
-        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player1, seriesOfPlayer1);
-        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player2, seriesOfPlayer2);
-        this.CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
+        this.UpdateViewForPlayer(PlayerConstants.Player1, playerState1, targetScore);
+        this.UpdateViewForPlayer(PlayerConstants.Player2, playerState2, targetScore);
     };
-    GameManager.CheckWinCondition = function (remainingBallsOfPlayer1, remainingBallsOfPlayer2) {
-        if (remainingBallsOfPlayer1 === 0) {
-            var nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
-            GameViewManager.ShowWinDialog(nameOfPlayer1);
-        }
-        if (remainingBallsOfPlayer2 === 0) {
-            var nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
-            GameViewManager.ShowWinDialog(nameOfPlayer2);
+    GameManager.UpdateViewForPlayer = function (playerLabel, playerState, targetScore) {
+        var remainingBalls = Math.max(0, targetScore - playerState.CurrentScore);
+        var average = playerState.CurrentScore / Math.max(playerState.Take, 1);
+        var series = playerState.CurrentScore - playerState.PreviousScore;
+        GameViewManager.UpdateCalculatedPlayerDetails(playerLabel, remainingBalls, average, series);
+        GameViewManager.UpdatePlayerStateDetails(playerLabel, playerState);
+        if (remainingBalls === 0) {
+            GameViewManager.ShowWinDialog(playerState.Name);
         }
     };
     return GameManager;
@@ -220,33 +188,19 @@ var GameViewManager = (function () {
     GameViewManager.SetRemainingBallsOnTableDisplayValue = function (value) {
         HtmlUtils.SetInnerHtmlById("remaining_balls_display", "" + value);
     };
-    GameViewManager.UpdateTakeDisplay = function (takesOfPlayer1, takesOfPlayer2) {
-        HtmlUtils.SetInnerHtmlById("player1_take", "A: " + takesOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_take", "A: " + takesOfPlayer2);
-    };
-    GameViewManager.UpdateHighestSeriesDisplay = function (highestSeriesOfPlayer1, highestSeriesOfPlayer2) {
-        HtmlUtils.SetInnerHtmlById("player1_highest", "H: " + highestSeriesOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_highest", "H: " + highestSeriesOfPlayer2);
-    };
-    GameViewManager.UpdatePlayerScoreDisplay = function (scoreOfPlayer1, scoreOfPlayer2) {
-        HtmlUtils.SetInnerHtmlById("player1_score", "" + scoreOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_score", "" + scoreOfPlayer2);
-    };
-    GameViewManager.UpdatePlayerAverageDisplay = function (averageOfPlayer1, averageOfPlayer2) {
-        HtmlUtils.SetInnerHtmlById("player1_average", "Ø: " + averageOfPlayer1.toFixed(2));
-        HtmlUtils.SetInnerHtmlById("player2_average", "Ø: " + averageOfPlayer2.toFixed(2));
-    };
-    GameViewManager.UpdateRemainingBallsOfPlayerDisplay = function (remainingBallsOfPlayer1, remainingBallsOfPlayer2) {
-        HtmlUtils.SetInnerHtmlById("player1_remaining", "R: " + remainingBallsOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_remaining", "R: " + remainingBallsOfPlayer2);
-    };
     GameViewManager.UpdatePlayerNames = function (nameOfPlayer1, nameOfPlayer2) {
         HtmlUtils.SetInnerHtmlById("player1_name", nameOfPlayer1);
         HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
     };
-    GameViewManager.UpdateSeriesCounter = function (playerLabel, series) {
-        var elementId = playerLabel == PlayerConstants.Player1 ? "player1_series_counter" : "player2_series_counter";
-        HtmlUtils.SetInnerHtmlById(elementId, "Serie: " + series);
+    GameViewManager.UpdatePlayerStateDetails = function (playerLabel, playerState) {
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "H: " + playerState.HighestSeries);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_take", "A: " + playerState.Take);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_score", "" + playerState.CurrentScore);
+    };
+    GameViewManager.UpdateCalculatedPlayerDetails = function (playerLabel, remainingBalls, average, series) {
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_remaining", "R: " + remainingBalls);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_average", "Ø: " + average.toFixed(2));
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_series_counter", "Serie: " + series);
     };
     GameViewManager.ShowGameView = function () {
         HtmlUtils.ShowElementById("game_view");
@@ -332,6 +286,8 @@ var HtmlUtils = (function () {
 var LocalStorageConstants = (function () {
     function LocalStorageConstants() {
     }
+    LocalStorageConstants.Player1StateKey = "player1_state";
+    LocalStorageConstants.Player2StateKey = "player2_state";
     LocalStorageConstants.Player1NameKey = "player1_name";
     LocalStorageConstants.Player2NameKey = "player2_name";
     LocalStorageConstants.Player1ScoreKey = "player1_score";
@@ -351,7 +307,7 @@ var LocalStorageConstants = (function () {
     LocalStorageConstants.StorageVersionKey = "storage_verison";
     LocalStorageConstants.GameStateInProgress = "in_progress";
     LocalStorageConstants.GameStateNoGame = "no_game";
-    LocalStorageConstants.StorageVersion = "0";
+    LocalStorageConstants.StorageVersion = "0.1";
     return LocalStorageConstants;
 }());
 var LocalStorageManager = (function () {
@@ -360,52 +316,6 @@ var LocalStorageManager = (function () {
     LocalStorageManager.GetStoredNumber = function (key) {
         var value = localStorage.getItem(key);
         return Number(value);
-    };
-    LocalStorageManager.GetStoredNumberForPlayer = function (playerLabel, player1Key, player2Key) {
-        var storageKey = playerLabel === PlayerConstants.Player1 ? player1Key : player2Key;
-        return this.GetStoredNumber(storageKey);
-    };
-    LocalStorageManager.GetStoredStringForPlayer = function (playerLabel, player1Key, player2Key) {
-        var storageKey = playerLabel === PlayerConstants.Player1 ? player1Key : player2Key;
-        return localStorage.getItem(storageKey);
-    };
-    LocalStorageManager.StoreNumberForPlayer = function (playerLabel, value, player1Key, player2Key) {
-        var storageKey = playerLabel === PlayerConstants.Player1 ? player1Key : player2Key;
-        localStorage.setItem(storageKey, "" + value);
-    };
-    LocalStorageManager.StoreStringForPlayer = function (playerLabel, value, player1Key, player2Key) {
-        var storageKey = playerLabel === PlayerConstants.Player1 ? player1Key : player2Key;
-        localStorage.setItem(storageKey, value);
-    };
-    LocalStorageManager.GetCurrentScoreOfPlayer = function (playerLabel) {
-        return this.GetStoredNumberForPlayer(playerLabel, LocalStorageConstants.Player1ScoreKey, LocalStorageConstants.Player2ScoreKey);
-    };
-    LocalStorageManager.StoreCurrentScoreOfPlayer = function (playerLabel, score) {
-        this.StoreNumberForPlayer(playerLabel, score, LocalStorageConstants.Player1ScoreKey, LocalStorageConstants.Player2ScoreKey);
-    };
-    LocalStorageManager.GetPreviousScoreOfPlayer = function (playerLabel) {
-        return this.GetStoredNumberForPlayer(playerLabel, LocalStorageConstants.Player1PreviousScoreKey, LocalStorageConstants.Player2PreviousScoreKey);
-    };
-    LocalStorageManager.StorePreviousScoreOfPlayer = function (playerLabel, previousScore) {
-        this.StoreNumberForPlayer(playerLabel, previousScore, LocalStorageConstants.Player1PreviousScoreKey, LocalStorageConstants.Player2PreviousScoreKey);
-    };
-    LocalStorageManager.GetHighestSeriesOfPlayer = function (playerLabel) {
-        return this.GetStoredNumberForPlayer(playerLabel, LocalStorageConstants.Player1HighestSeriesKey, LocalStorageConstants.Player2HighestSeriesKey);
-    };
-    LocalStorageManager.StoreHighestSeriesOfPlayer = function (playerLabel, highestSeries) {
-        this.StoreNumberForPlayer(playerLabel, highestSeries, LocalStorageConstants.Player1HighestSeriesKey, LocalStorageConstants.Player2HighestSeriesKey);
-    };
-    LocalStorageManager.GetTakeOfPlayer = function (playerLabel) {
-        return this.GetStoredNumberForPlayer(playerLabel, LocalStorageConstants.Player1TakeKey, LocalStorageConstants.Player2TakeKey);
-    };
-    LocalStorageManager.StoreTakeOfPlayer = function (playerLabel, take) {
-        this.StoreNumberForPlayer(playerLabel, take, LocalStorageConstants.Player1TakeKey, LocalStorageConstants.Player2TakeKey);
-    };
-    LocalStorageManager.GetFoulCountOfPlayer = function (playerLabel) {
-        return this.GetStoredNumberForPlayer(playerLabel, LocalStorageConstants.Player1FoulsKey, LocalStorageConstants.Player2FoulsKey);
-    };
-    LocalStorageManager.StoreFoulCountOfPlayer = function (playerLabel, foulCount) {
-        this.StoreNumberForPlayer(playerLabel, foulCount, LocalStorageConstants.Player1FoulsKey, LocalStorageConstants.Player2FoulsKey);
     };
     LocalStorageManager.GetTargetScore = function () {
         return this.GetStoredNumber(LocalStorageConstants.TargetScoreKey);
@@ -422,17 +332,20 @@ var LocalStorageManager = (function () {
     LocalStorageManager.StoreAmountOfRemainingBallsOnTable = function (remainingBalls) {
         localStorage.setItem(LocalStorageConstants.RemainingBallsOnTableKey, "" + remainingBalls);
     };
-    LocalStorageManager.StorePlayerName = function (playerLabel, playerName) {
-        this.StoreStringForPlayer(playerLabel, playerName, LocalStorageConstants.Player1NameKey, LocalStorageConstants.Player2NameKey);
-    };
-    LocalStorageManager.GetPlayerName = function (playerLabel) {
-        return this.GetStoredStringForPlayer(playerLabel, LocalStorageConstants.Player1NameKey, LocalStorageConstants.Player2NameKey);
-    };
     LocalStorageManager.StoreTargetScore = function (targetScore) {
         localStorage.setItem(LocalStorageConstants.TargetScoreKey, "" + targetScore);
     };
     LocalStorageManager.StoreGameState = function (gameState) {
         localStorage.setItem(LocalStorageConstants.GameStateKey, gameState);
+    };
+    LocalStorageManager.StorePlayerState = function (playerLabel, playerInfo) {
+        var storageKey = playerLabel == PlayerConstants.Player1 ? LocalStorageConstants.Player1StateKey : LocalStorageConstants.Player2StateKey;
+        localStorage.setItem(storageKey, JSON.stringify(playerInfo));
+    };
+    LocalStorageManager.GetPlayerState = function (playerLabel) {
+        var storageKey = playerLabel == PlayerConstants.Player1 ? LocalStorageConstants.Player1StateKey : LocalStorageConstants.Player2StateKey;
+        var json = localStorage.getItem(storageKey);
+        return JSON.parse(json);
     };
     LocalStorageManager.IsGameInProgress = function () {
         return localStorage.getItem(LocalStorageConstants.GameStateKey) === LocalStorageConstants.GameStateInProgress;
@@ -458,6 +371,17 @@ var PlayerConstants = (function () {
     PlayerConstants.Player1 = "player1";
     PlayerConstants.Player2 = "player2";
     return PlayerConstants;
+}());
+var PlayerState = (function () {
+    function PlayerState(name) {
+        this.Name = name;
+        this.CurrentScore = 0;
+        this.PreviousScore = 0;
+        this.HighestSeries = 0;
+        this.Take = 0;
+        this.FoulCount = 0;
+    }
+    return PlayerState;
 }());
 var StartGameInfo = (function () {
     function StartGameInfo(NameOfPlayer1, NameOfPlayer2, TargetScore) {

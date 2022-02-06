@@ -8,7 +8,8 @@ class GameManager
 
     public static CreateNewGame()
     {
-        this.ResetGame();
+        this.SetActivePlayer(PlayerConstants.Player1);
+        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(15);
         GameViewManager.UnlockControls();
         const startGameInfo = GameViewManager.ExtractStartGameInfo();
         
@@ -17,14 +18,15 @@ class GameManager
             return;
         }
 
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player1, startGameInfo.NameOfPlayer1);
-        LocalStorageManager.StorePlayerName(PlayerConstants.Player2, startGameInfo.NameOfPlayer2);
+        const player1State = new PlayerState(startGameInfo.NameOfPlayer1);
+        const player2State = new PlayerState(startGameInfo.NameOfPlayer2);
+        player1State.Take = 1;
+        LocalStorageManager.StorePlayerState(PlayerConstants.Player1, player1State);
+        LocalStorageManager.StorePlayerState(PlayerConstants.Player2, player2State);
+
         LocalStorageManager.StoreTargetScore(startGameInfo.TargetScore);
         LocalStorageManager.StoreGameState(LocalStorageConstants.GameStateInProgress);
-        LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StoreFoulCountOfPlayer(PlayerConstants.Player2, 0);
-        LocalStorageManager.StoreTakeOfPlayer(PlayerConstants.Player1, 1);
-        LocalStorageManager.StoreTakeOfPlayer(PlayerConstants.Player2, 0);
+
         this.ReloadStoredState();
         this.ShowViewDependingOnGameState();
     }
@@ -48,13 +50,16 @@ class GameManager
         const activePlayer = LocalStorageManager.GetActivePlayer();
         const nextPlayer = activePlayer === PlayerConstants.Player1 ? PlayerConstants.Player2 : PlayerConstants.Player1;
 
-        this.UpdateHighestSeriesIfNecessary(activePlayer);
-        LocalStorageManager.StorePreviousScoreOfPlayer(activePlayer, LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer));
+        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        const nextPlayerState = LocalStorageManager.GetPlayerState(nextPlayer);
+
+        this.UpdateHighestSeriesIfNecessary(activePlayerState);
+        activePlayerState.PreviousScore = activePlayerState.CurrentScore;
+        nextPlayerState.Take += 1;
+        LocalStorageManager.StorePlayerState(activePlayer, activePlayerState);
+        LocalStorageManager.StorePlayerState(nextPlayer, nextPlayerState);
         this.SetActivePlayer(nextPlayer);
-        const takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(nextPlayer);
-        LocalStorageManager.StoreTakeOfPlayer(nextPlayer, takeOfPlayer + 1);
         this.UpdateView();
-        GameViewManager.UpdateSeriesCounter(nextPlayer, 0);
     }
 
     public static Undo()
@@ -71,9 +76,9 @@ class GameManager
     public static Foul()
     {
         const activePlayer = LocalStorageManager.GetActivePlayer();
-        const takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(activePlayer);
+        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
 
-        if(takeOfPlayer === 1)
+        if(activePlayerState.Take === 1)
         {
             GameViewManager.SetVisibilityOfElement("break_foul_dialog", true);
             return;
@@ -85,31 +90,30 @@ class GameManager
     public static HandleBreakFoul()
     {
         const activePlayer = LocalStorageManager.GetActivePlayer();
-        let foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
-        foulCount++;
-        this.ApplyFoulPoints(activePlayer, foulCount, -2);
+        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        activePlayerState.FoulCount += 1;
+        this.ApplyFoulPoints(activePlayer, activePlayerState, -2);
     }
 
     public static HandleNormalFoul()
     {
         const activePlayer = LocalStorageManager.GetActivePlayer();
-        let foulCount = LocalStorageManager.GetFoulCountOfPlayer(activePlayer);
-        foulCount++;
+        const activePlayerState = LocalStorageManager.GetPlayerState(activePlayer);
+        activePlayerState.FoulCount += 1;
 
-        if(foulCount % 3 === 0)
+        if(activePlayerState.FoulCount % 3 === 0)
         {
-            this.ApplyFoulPoints(activePlayer, foulCount, -16);
+            this.ApplyFoulPoints(activePlayer, activePlayerState, -16);
             return;
         }
 
-        this.ApplyFoulPoints(activePlayer, foulCount, -1);  
+        this.ApplyFoulPoints(activePlayer, activePlayerState, -1);  
     }
 
-    public static ApplyFoulPoints(activePlayer: string, foulCount: number, negativePoints: number)
+    public static ApplyFoulPoints(activePlayer: string, playerState: PlayerState, negativePoints: number)
     {
-        const currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
-        LocalStorageManager.StoreFoulCountOfPlayer(activePlayer, foulCount);
-        LocalStorageManager.StoreCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
+        playerState.CurrentScore += negativePoints;
+        LocalStorageManager.StorePlayerState(activePlayer, playerState);
         this.UpdateView();
         this.SwitchPlayer();
     }
@@ -130,35 +134,20 @@ class GameManager
             return;
         }
 
-        const nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
-        const nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
-        GameViewManager.UpdatePlayerNames(nameOfPlayer1, nameOfPlayer2);
+        const playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
+        const playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);
+        GameViewManager.UpdatePlayerNames(playerState1.Name, playerState2.Name);
         this.UpdateView();        
         this.SetActivePlayer(LocalStorageManager.GetActivePlayer());
     }
 
-    public static ResetGame()
+    public static UpdateHighestSeriesIfNecessary(playerState: PlayerState)
     {
-        LocalStorageManager.StoreCurrentScoreOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StoreCurrentScoreOfPlayer(PlayerConstants.Player2, 0);
-        LocalStorageManager.StorePreviousScoreOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StorePreviousScoreOfPlayer(PlayerConstants.Player2, 0);
-        LocalStorageManager.StoreHighestSeriesOfPlayer(PlayerConstants.Player1, 0);
-        LocalStorageManager.StoreHighestSeriesOfPlayer(PlayerConstants.Player2, 0);
-        this.SetActivePlayer(PlayerConstants.Player1);
-        LocalStorageManager.StoreAmountOfRemainingBallsOnTable(15);
-    }
+        const currentSeries = playerState.CurrentScore - playerState.PreviousScore;
 
-    public static UpdateHighestSeriesIfNecessary(playerLabel: string)
-    {
-        const previousScore = LocalStorageManager.GetPreviousScoreOfPlayer(playerLabel);
-        const currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(playerLabel);
-        const highestSeriesBefore = LocalStorageManager.GetHighestSeriesOfPlayer(playerLabel);
-        const currentSeries = currentScore - previousScore;
-
-        if(currentSeries > highestSeriesBefore)
+        if(currentSeries > playerState.HighestSeries)
         {
-            LocalStorageManager.StoreHighestSeriesOfPlayer(playerLabel, currentSeries);
+            playerState.HighestSeries = currentSeries;
         }
     }
 
@@ -186,14 +175,15 @@ class GameManager
 
     public static ChangePlayerScore(playerLabel: string, delta: number)
     {
+        const playerState = LocalStorageManager.GetPlayerState(playerLabel);
+
         if(delta > 0)
         {
-            LocalStorageManager.StoreFoulCountOfPlayer(playerLabel, 0);
+            playerState.FoulCount = 0;
         }
 
-        let playerScore = LocalStorageManager.GetCurrentScoreOfPlayer(playerLabel);
-        playerScore += delta;
-        LocalStorageManager.StoreCurrentScoreOfPlayer(playerLabel, playerScore);
+        playerState.CurrentScore += delta;
+        LocalStorageManager.StorePlayerState(playerLabel, playerState);
     }
 
     public static ChangeAmountOfRemainingBalls(delta: number)
@@ -212,49 +202,28 @@ class GameManager
     public static UpdateView()
     {
         const targetScore = LocalStorageManager.GetTargetScore();
-        const scoreOfPlayer1 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player1);
-        const scoreOfPlayer2 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player2);
-        const previousScoreOfPlayer1 = LocalStorageManager.GetPreviousScoreOfPlayer(PlayerConstants.Player1);
-        const previousScoreOfPlayer2 = LocalStorageManager.GetPreviousScoreOfPlayer(PlayerConstants.Player2);
-        const takeOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
-        const takeOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
-        const highestSeriesOfPlayer1 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player1);
-        const highestSeriesOfPlayer2 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player2);
-        const takesOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
-        const takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
         const remainingBallsOnTable = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
+        const playerState1 = LocalStorageManager.GetPlayerState(PlayerConstants.Player1);
+        const playerState2 = LocalStorageManager.GetPlayerState(PlayerConstants.Player2);        
 
-        const remainingBallsOfPlayer1 = Math.max(0, targetScore - scoreOfPlayer1);
-        const remainingBallsOfPlayer2 = Math.max(0, targetScore - scoreOfPlayer2);
-        const averageOfPlayer1 = scoreOfPlayer1 / Math.max(takeOfPlayer1, 1);
-        const averageOfPlayer2 = scoreOfPlayer2 / Math.max(takeOfPlayer2, 1);
-        const seriesOfPlayer1 = scoreOfPlayer1 - previousScoreOfPlayer1;
-        const seriesOfPlayer2 = scoreOfPlayer2 - previousScoreOfPlayer2;
-
-        GameViewManager.UpdateRemainingBallsOfPlayerDisplay(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
-        GameViewManager.UpdatePlayerAverageDisplay(averageOfPlayer1, averageOfPlayer2);
-        GameViewManager.UpdateHighestSeriesDisplay(highestSeriesOfPlayer1, highestSeriesOfPlayer2);      
-        GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
-        GameViewManager.UpdatePlayerScoreDisplay(scoreOfPlayer1, scoreOfPlayer2);
         GameViewManager.SetRemainingBallsOnTableDisplayValue(remainingBallsOnTable);
-        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player1, seriesOfPlayer1);
-        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player2, seriesOfPlayer2);
 
-        this.CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
+        this.UpdateViewForPlayer(PlayerConstants.Player1, playerState1, targetScore)
+        this.UpdateViewForPlayer(PlayerConstants.Player2, playerState2, targetScore)
     }
 
-    public static CheckWinCondition(remainingBallsOfPlayer1: number, remainingBallsOfPlayer2: number)
+    private static UpdateViewForPlayer(playerLabel: string, playerState: PlayerState, targetScore: number)
     {
-        if(remainingBallsOfPlayer1 === 0)
-        {
-            const nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
-            GameViewManager.ShowWinDialog(nameOfPlayer1);
-        }
+        const remainingBalls = Math.max(0, targetScore - playerState.CurrentScore);
+        const average = playerState.CurrentScore / Math.max(playerState.Take, 1);
+        const series = playerState.CurrentScore - playerState.PreviousScore;
 
-        if(remainingBallsOfPlayer2 === 0)
+        GameViewManager.UpdateCalculatedPlayerDetails(playerLabel, remainingBalls, average, series);
+        GameViewManager.UpdatePlayerStateDetails(playerLabel, playerState);
+
+        if(remainingBalls === 0)
         {
-            const nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
-            GameViewManager.ShowWinDialog(nameOfPlayer2);
+            GameViewManager.ShowWinDialog(playerState.Name);
         }
     }
 }

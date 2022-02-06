@@ -38,46 +38,24 @@ class GameViewManager
         HtmlUtils.SetInnerHtmlById("remaining_balls_display", "" + value);
     }
 
-    public static UpdateTakeDisplay(takesOfPlayer1: number, takesOfPlayer2: number)
-    {
-        HtmlUtils.SetInnerHtmlById("player1_take", "A: " + takesOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_take", "A: " + takesOfPlayer2);
-    }
-
-    public static UpdateHighestSeriesDisplay(highestSeriesOfPlayer1: number, highestSeriesOfPlayer2: number)
-    {
-        HtmlUtils.SetInnerHtmlById("player1_highest", "H: " + highestSeriesOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_highest", "H: " + highestSeriesOfPlayer2);
-    }
-
-    public static UpdatePlayerScoreDisplay(scoreOfPlayer1: number, scoreOfPlayer2: number)
-    {
-        HtmlUtils.SetInnerHtmlById("player1_score", "" + scoreOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_score", "" + scoreOfPlayer2);
-    }
-
-    public static UpdatePlayerAverageDisplay(averageOfPlayer1: number, averageOfPlayer2: number)
-    {
-        HtmlUtils.SetInnerHtmlById("player1_average", "Ø: " + averageOfPlayer1.toFixed(2));
-        HtmlUtils.SetInnerHtmlById("player2_average", "Ø: " + averageOfPlayer2.toFixed(2));
-    }
-
-    public static UpdateRemainingBallsOfPlayerDisplay(remainingBallsOfPlayer1: number, remainingBallsOfPlayer2: number)
-    {
-        HtmlUtils.SetInnerHtmlById("player1_remaining", "R: " + remainingBallsOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_remaining", "R: " + remainingBallsOfPlayer2);
-    }
-
     public static UpdatePlayerNames(nameOfPlayer1: string, nameOfPlayer2: string)
     {
         HtmlUtils.SetInnerHtmlById("player1_name", nameOfPlayer1);
         HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
     }
 
-    public static UpdateSeriesCounter(playerLabel: string, series: number)
+    public static UpdatePlayerStateDetails(playerLabel: string, playerState: PlayerState)
     {
-        const elementId = playerLabel == PlayerConstants.Player1 ? "player1_series_counter" : "player2_series_counter";
-        HtmlUtils.SetInnerHtmlById(elementId, "Serie: " + series);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "H: " + playerState.HighestSeries);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_take", "A: " + playerState.Take);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_score", "" + playerState.CurrentScore);
+    }
+
+    public static UpdateCalculatedPlayerDetails(playerLabel: string, remainingBalls: number, average: number, series: number)
+    {
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_remaining", "R: " + remainingBalls);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_average", "Ø: " + average.toFixed(2));
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_series_counter", "Serie: " + series);
     }
 
     public static ShowGameView()
@@ -113,7 +91,7 @@ class GameViewManager
 
     private static GetLockableButtons()
     {
-        const classNames = [".switch-player", ".remaining-balls", /*"undo",*/ ".new-rack", ".minus", ".plus", ".foul"];
+        const classNames = [".switch-player", ".remaining-balls", ".new-rack", ".minus", ".plus", ".foul"];
 
         return classNames.map(cn => <HTMLButtonElement> document.querySelector(cn));
     }
