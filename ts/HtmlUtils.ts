@@ -2,11 +2,7 @@ class HtmlUtils{
     public static SwitchClass(element: Element, classToRemove: string, classToAdd: string)
     {
         element.classList.remove(classToRemove);
-    
-        if(!element.classList.contains(classToAdd))
-        {
-            element.classList.add(classToAdd);
-        }
+        element.classList.add(classToAdd);
     }
     
     public static ShowElementById(elementId: string)

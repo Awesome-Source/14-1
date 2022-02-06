@@ -39,26 +39,20 @@ var GameManager = (function () {
         this.SetActivePlayer(nextPlayer);
         var takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(nextPlayer);
         LocalStorageManager.StoreTakeOfPlayer(nextPlayer, takeOfPlayer + 1);
-        this.UpdateDetails();
-        this.UpdateTakeDisplayToStoredValues();
-        GameViewManager.UpdateSeriesCounter(0);
-    };
-    GameManager.UpdateTakeDisplayToStoredValues = function () {
-        var takesOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
-        var takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
-        GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
+        this.UpdateView();
+        GameViewManager.UpdateSeriesCounter(nextPlayer, 0);
     };
     GameManager.Undo = function () {
     };
     GameManager.NewRack = function () {
         this.ChangePlayerScore(LocalStorageManager.GetActivePlayer(), 14);
-        this.UpdateDetails();
+        this.UpdateView();
     };
     GameManager.Foul = function () {
         var activePlayer = LocalStorageManager.GetActivePlayer();
         var takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(activePlayer);
         if (takeOfPlayer === 1) {
-            GameViewManager.SetVisibilityOfDialog("break_foul_dialog", true);
+            GameViewManager.SetVisibilityOfElement("break_foul_dialog", true);
             return;
         }
         this.HandleNormalFoul();
@@ -83,8 +77,7 @@ var GameManager = (function () {
         var currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
         LocalStorageManager.StoreFoulCountOfPlayer(activePlayer, foulCount);
         LocalStorageManager.StoreCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
-        this.SetPlayerScoreValuesToStoredValues();
-        this.UpdateDetails();
+        this.UpdateView();
         this.SwitchPlayer();
     };
     GameManager.ReloadStoredState = function () {
@@ -95,10 +88,7 @@ var GameManager = (function () {
         var nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
         var nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
         GameViewManager.UpdatePlayerNames(nameOfPlayer1, nameOfPlayer2);
-        this.SetPlayerScoreValuesToStoredValues();
-        this.UpdateTakeDisplayToStoredValues();
-        this.UpdateDetails();
-        GameViewManager.SetRemainingBallsDisplayValue(LocalStorageManager.GetAmountOfRemainingBallsOnTable());
+        this.UpdateView();
         this.SetActivePlayer(LocalStorageManager.GetActivePlayer());
     };
     GameManager.ResetGame = function () {
@@ -132,8 +122,7 @@ var GameManager = (function () {
             remainingBalls = 15;
         }
         LocalStorageManager.StoreAmountOfRemainingBallsOnTable(remainingBalls);
-        GameViewManager.SetRemainingBallsDisplayValue(remainingBalls);
-        this.UpdateDetails();
+        this.UpdateView();
     };
     GameManager.ChangePlayerScore = function (playerLabel, delta) {
         if (delta > 0) {
@@ -142,12 +131,6 @@ var GameManager = (function () {
         var playerScore = LocalStorageManager.GetCurrentScoreOfPlayer(playerLabel);
         playerScore += delta;
         LocalStorageManager.StoreCurrentScoreOfPlayer(playerLabel, playerScore);
-        this.SetPlayerScoreValuesToStoredValues();
-    };
-    GameManager.SetPlayerScoreValuesToStoredValues = function () {
-        var scoreOfPlayer1 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player1);
-        var scoreOfPlayer2 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player2);
-        GameViewManager.UpdatePlayerScoreDisplay(scoreOfPlayer1, scoreOfPlayer2);
     };
     GameManager.ChangeAmountOfRemainingBalls = function (delta) {
         var remainingBallsBefore = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
@@ -157,7 +140,7 @@ var GameManager = (function () {
         }
         this.SetRemainingBalls(remainingBalls);
     };
-    GameManager.UpdateDetails = function () {
+    GameManager.UpdateView = function () {
         var targetScore = LocalStorageManager.GetTargetScore();
         var scoreOfPlayer1 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player1);
         var scoreOfPlayer2 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player2);
@@ -167,21 +150,23 @@ var GameManager = (function () {
         var takeOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
         var highestSeriesOfPlayer1 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player1);
         var highestSeriesOfPlayer2 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player2);
+        var takesOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
+        var takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
+        var remainingBallsOnTable = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
         var remainingBallsOfPlayer1 = Math.max(0, targetScore - scoreOfPlayer1);
         var remainingBallsOfPlayer2 = Math.max(0, targetScore - scoreOfPlayer2);
         var averageOfPlayer1 = scoreOfPlayer1 / Math.max(takeOfPlayer1, 1);
         var averageOfPlayer2 = scoreOfPlayer2 / Math.max(takeOfPlayer2, 1);
+        var seriesOfPlayer1 = scoreOfPlayer1 - previousScoreOfPlayer1;
+        var seriesOfPlayer2 = scoreOfPlayer2 - previousScoreOfPlayer2;
         GameViewManager.UpdateRemainingBallsOfPlayerDisplay(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
         GameViewManager.UpdatePlayerAverageDisplay(averageOfPlayer1, averageOfPlayer2);
         GameViewManager.UpdateHighestSeriesDisplay(highestSeriesOfPlayer1, highestSeriesOfPlayer2);
-        var series = 0;
-        if (LocalStorageManager.GetActivePlayer() === PlayerConstants.Player1) {
-            series = scoreOfPlayer1 - previousScoreOfPlayer1;
-        }
-        else {
-            series = scoreOfPlayer2 - previousScoreOfPlayer2;
-        }
-        GameViewManager.UpdateSeriesCounter(series);
+        GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
+        GameViewManager.UpdatePlayerScoreDisplay(scoreOfPlayer1, scoreOfPlayer2);
+        GameViewManager.SetRemainingBallsOnTableDisplayValue(remainingBallsOnTable);
+        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player1, seriesOfPlayer1);
+        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player2, seriesOfPlayer2);
         this.CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
     };
     GameManager.CheckWinCondition = function (remainingBallsOfPlayer1, remainingBallsOfPlayer2) {
@@ -198,27 +183,33 @@ var GameViewManager = (function () {
     function GameViewManager() {
     }
     GameViewManager.HighlightActivePlayer = function (playerLabel) {
-        var player1ScoreElement = document.querySelector("#player1_score");
-        var player2ScoreElement = document.querySelector("#player2_score");
-        var player1NameElement = document.querySelector("#player1_name").parentElement;
-        var player2NameElement = document.querySelector("#player2_name").parentElement;
+        var player1ScoreElement = document.getElementById("player1_score");
+        var player2ScoreElement = document.getElementById("player2_score");
+        var player1NameElement = document.getElementById("player1_name").parentElement;
+        var player2NameElement = document.getElementById("player2_name").parentElement;
+        var player1SeriesElement = document.getElementById("player1_series_counter").parentElement;
+        var player2SeriesElement = document.getElementById("player2_series_counter").parentElement;
         if (playerLabel === PlayerConstants.Player1) {
             HtmlUtils.SwitchClass(player1ScoreElement, "w3-text-grey", "w3-text-orange");
             HtmlUtils.SwitchClass(player2ScoreElement, "w3-text-orange", "w3-text-grey");
             HtmlUtils.SwitchClass(player1NameElement, "w3-light-grey", "w3-blue");
             HtmlUtils.SwitchClass(player2NameElement, "w3-blue", "w3-light-grey");
+            player1SeriesElement.classList.remove("w3-hide");
+            player2SeriesElement.classList.add("w3-hide");
             return;
         }
         HtmlUtils.SwitchClass(player1ScoreElement, "w3-text-orange", "w3-text-grey");
         HtmlUtils.SwitchClass(player2ScoreElement, "w3-text-grey", "w3-text-orange");
         HtmlUtils.SwitchClass(player1NameElement, "w3-blue", "w3-light-grey");
         HtmlUtils.SwitchClass(player2NameElement, "w3-light-grey", "w3-blue");
+        player1SeriesElement.classList.add("w3-hide");
+        player2SeriesElement.classList.remove("w3-hide");
     };
-    GameViewManager.SetVisibilityOfDialog = function (dialogId, isVisible) {
+    GameViewManager.SetVisibilityOfElement = function (elementId, isVisible) {
         var displayValue = isVisible ? "block" : "none";
-        document.getElementById(dialogId).style.display = displayValue;
+        document.getElementById(elementId).style.display = displayValue;
     };
-    GameViewManager.SetRemainingBallsDisplayValue = function (value) {
+    GameViewManager.SetRemainingBallsOnTableDisplayValue = function (value) {
         HtmlUtils.SetInnerHtmlById("remaining_balls_display", "" + value);
     };
     GameViewManager.UpdateTakeDisplay = function (takesOfPlayer1, takesOfPlayer2) {
@@ -245,8 +236,9 @@ var GameViewManager = (function () {
         HtmlUtils.SetInnerHtmlById("player1_name", nameOfPlayer1);
         HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
     };
-    GameViewManager.UpdateSeriesCounter = function (series) {
-        HtmlUtils.SetInnerHtmlById("series_counter", "Serie: " + series);
+    GameViewManager.UpdateSeriesCounter = function (playerLabel, series) {
+        var elementId = playerLabel == PlayerConstants.Player1 ? "player1_series_counter" : "player2_series_counter";
+        HtmlUtils.SetInnerHtmlById(elementId, "Serie: " + series);
     };
     GameViewManager.ShowGameView = function () {
         HtmlUtils.ShowElementById("game_view");
@@ -286,9 +278,7 @@ var HtmlUtils = (function () {
     }
     HtmlUtils.SwitchClass = function (element, classToRemove, classToAdd) {
         element.classList.remove(classToRemove);
-        if (!element.classList.contains(classToAdd)) {
-            element.classList.add(classToAdd);
-        }
+        element.classList.add(classToAdd);
     };
     HtmlUtils.ShowElementById = function (elementId) {
         var element = document.getElementById(elementId);
@@ -441,11 +431,11 @@ var UserInputGateway = (function () {
     function UserInputGateway() {
     }
     UserInputGateway.ShowDialog = function (dialogId) {
-        GameViewManager.SetVisibilityOfDialog(dialogId, true);
+        GameViewManager.SetVisibilityOfElement(dialogId, true);
     };
     UserInputGateway.HideDialog = function (dialogId, event) {
         HtmlUtils.StopPropagation(event);
-        GameViewManager.SetVisibilityOfDialog(dialogId, false);
+        GameViewManager.SetVisibilityOfElement(dialogId, false);
     };
     UserInputGateway.StopPropagation = function (event) {
         HtmlUtils.StopPropagation(event);
@@ -462,7 +452,7 @@ var UserInputGateway = (function () {
     };
     UserInputGateway.SetRemainingBallsFromDialog = function (remainingBalls, event) {
         HtmlUtils.StopPropagation(event);
-        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
+        GameViewManager.SetVisibilityOfElement("remaining_balls_selection_dialog", false);
         GameManager.SetRemainingBalls(remainingBalls);
     };
     UserInputGateway.Undo = function () {
@@ -481,17 +471,17 @@ var UserInputGateway = (function () {
         GameManager.Foul();
     };
     UserInputGateway.CaptureOutsideDialogClick = function (dialogId) {
-        GameViewManager.SetVisibilityOfDialog(dialogId, false);
+        GameViewManager.SetVisibilityOfElement(dialogId, false);
     };
     UserInputGateway.ReloadStoredState = function () {
         GameManager.ReloadStoredState();
     };
     UserInputGateway.HandleBreakFoul = function () {
-        GameViewManager.SetVisibilityOfDialog("break_foul_dialog", false);
+        GameViewManager.SetVisibilityOfElement("break_foul_dialog", false);
         GameManager.HandleBreakFoul();
     };
     UserInputGateway.HandleNormalFoul = function () {
-        GameViewManager.SetVisibilityOfDialog("break_foul_dialog", false);
+        GameViewManager.SetVisibilityOfElement("break_foul_dialog", false);
         GameManager.HandleNormalFoul();
     };
     return UserInputGateway;

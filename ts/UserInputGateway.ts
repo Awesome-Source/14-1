@@ -2,13 +2,13 @@ class UserInputGateway{
 
     public static ShowDialog(dialogId: string)
     {
-        GameViewManager.SetVisibilityOfDialog(dialogId, true);
+        GameViewManager.SetVisibilityOfElement(dialogId, true);
     }
 
     public static HideDialog(dialogId: string, event: Event)
     {
         HtmlUtils.StopPropagation(event);
-        GameViewManager.SetVisibilityOfDialog(dialogId, false);
+        GameViewManager.SetVisibilityOfElement(dialogId, false);
     }
 
     public static StopPropagation(event: Event)
@@ -35,7 +35,7 @@ class UserInputGateway{
     public static SetRemainingBallsFromDialog(remainingBalls: number, event: Event)
     {
         HtmlUtils.StopPropagation(event);
-        GameViewManager.SetVisibilityOfDialog("remaining_balls_selection_dialog", false);
+        GameViewManager.SetVisibilityOfElement("remaining_balls_selection_dialog", false);
         GameManager.SetRemainingBalls(remainingBalls);
     }
 
@@ -66,7 +66,7 @@ class UserInputGateway{
 
     public static CaptureOutsideDialogClick(dialogId: string)
     {
-        GameViewManager.SetVisibilityOfDialog(dialogId, false);
+        GameViewManager.SetVisibilityOfElement(dialogId, false);
     }
 
     public static ReloadStoredState()
@@ -76,13 +76,13 @@ class UserInputGateway{
 
     public static HandleBreakFoul()
     {
-        GameViewManager.SetVisibilityOfDialog("break_foul_dialog", false);
+        GameViewManager.SetVisibilityOfElement("break_foul_dialog", false);
         GameManager.HandleBreakFoul();
     }
 
     public static HandleNormalFoul()
     {
-        GameViewManager.SetVisibilityOfDialog("break_foul_dialog", false);
+        GameViewManager.SetVisibilityOfElement("break_foul_dialog", false);
         GameManager.HandleNormalFoul();
     }
 }

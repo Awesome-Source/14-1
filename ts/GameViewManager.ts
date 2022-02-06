@@ -1,10 +1,12 @@
 class GameViewManager
 {
     public static HighlightActivePlayer(playerLabel: string){
-        const player1ScoreElement = document.querySelector("#player1_score");
-        const player2ScoreElement = document.querySelector("#player2_score");
-        const player1NameElement = document.querySelector("#player1_name").parentElement;
-        const player2NameElement = document.querySelector("#player2_name").parentElement;
+        const player1ScoreElement = document.getElementById("player1_score");
+        const player2ScoreElement = document.getElementById("player2_score");
+        const player1NameElement = document.getElementById("player1_name").parentElement;
+        const player2NameElement = document.getElementById("player2_name").parentElement;
+        const player1SeriesElement = document.getElementById("player1_series_counter").parentElement;
+        const player2SeriesElement = document.getElementById("player2_series_counter").parentElement;
     
         if(playerLabel === PlayerConstants.Player1)
         {   
@@ -12,22 +14,26 @@ class GameViewManager
             HtmlUtils.SwitchClass(player2ScoreElement, "w3-text-orange", "w3-text-grey");
             HtmlUtils.SwitchClass(player1NameElement, "w3-light-grey", "w3-blue");
             HtmlUtils.SwitchClass(player2NameElement, "w3-blue", "w3-light-grey");
+            player1SeriesElement.classList.remove("w3-hide");
+            player2SeriesElement.classList.add("w3-hide");
             return;
         }
     
         HtmlUtils.SwitchClass(player1ScoreElement, "w3-text-orange", "w3-text-grey");
         HtmlUtils.SwitchClass(player2ScoreElement, "w3-text-grey", "w3-text-orange");
         HtmlUtils.SwitchClass(player1NameElement, "w3-blue", "w3-light-grey");
-        HtmlUtils.SwitchClass(player2NameElement, "w3-light-grey", "w3-blue"); 
+        HtmlUtils.SwitchClass(player2NameElement, "w3-light-grey", "w3-blue");
+        player1SeriesElement.classList.add("w3-hide");
+        player2SeriesElement.classList.remove("w3-hide");
     }
 
-    public static SetVisibilityOfDialog(dialogId: string, isVisible: boolean)
+    public static SetVisibilityOfElement(elementId: string, isVisible: boolean)
     {
         const displayValue = isVisible ? "block" : "none";
-        document.getElementById(dialogId).style.display= displayValue;
+        document.getElementById(elementId).style.display = displayValue;
     }
 
-    public static SetRemainingBallsDisplayValue(value: number)
+    public static SetRemainingBallsOnTableDisplayValue(value: number)
     {
         HtmlUtils.SetInnerHtmlById("remaining_balls_display", "" + value);
     }
@@ -68,9 +74,10 @@ class GameViewManager
         HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
     }
 
-    public static UpdateSeriesCounter(series: number)
+    public static UpdateSeriesCounter(playerLabel: string, series: number)
     {
-        HtmlUtils.SetInnerHtmlById("series_counter", "Serie: " + series);
+        const elementId = playerLabel == PlayerConstants.Player1 ? "player1_series_counter" : "player2_series_counter";
+        HtmlUtils.SetInnerHtmlById(elementId, "Serie: " + series);
     }
 
     public static ShowGameView()

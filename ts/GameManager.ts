@@ -52,16 +52,8 @@ class GameManager
         this.SetActivePlayer(nextPlayer);
         const takeOfPlayer = LocalStorageManager.GetTakeOfPlayer(nextPlayer);
         LocalStorageManager.StoreTakeOfPlayer(nextPlayer, takeOfPlayer + 1);
-        this.UpdateDetails();
-        this.UpdateTakeDisplayToStoredValues();
-        GameViewManager.UpdateSeriesCounter(0);
-    }
-
-    public static UpdateTakeDisplayToStoredValues()
-    {
-        const takesOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
-        const takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
-        GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
+        this.UpdateView();
+        GameViewManager.UpdateSeriesCounter(nextPlayer, 0);
     }
 
     public static Undo()
@@ -72,7 +64,7 @@ class GameManager
     public static NewRack()
     {
         this.ChangePlayerScore(LocalStorageManager.GetActivePlayer(), 14);
-        this.UpdateDetails();
+        this.UpdateView();
     }
 
     public static Foul()
@@ -82,7 +74,7 @@ class GameManager
 
         if(takeOfPlayer === 1)
         {
-            GameViewManager.SetVisibilityOfDialog("break_foul_dialog", true);
+            GameViewManager.SetVisibilityOfElement("break_foul_dialog", true);
             return;
         }
 
@@ -117,8 +109,7 @@ class GameManager
         const currentScore = LocalStorageManager.GetCurrentScoreOfPlayer(activePlayer);
         LocalStorageManager.StoreFoulCountOfPlayer(activePlayer, foulCount);
         LocalStorageManager.StoreCurrentScoreOfPlayer(activePlayer, currentScore + negativePoints);
-        this.SetPlayerScoreValuesToStoredValues();
-        this.UpdateDetails();
+        this.UpdateView();
         this.SwitchPlayer();
     }
 
@@ -134,12 +125,7 @@ class GameManager
         const nameOfPlayer1 = LocalStorageManager.GetPlayerName(PlayerConstants.Player1);
         const nameOfPlayer2 = LocalStorageManager.GetPlayerName(PlayerConstants.Player2);
         GameViewManager.UpdatePlayerNames(nameOfPlayer1, nameOfPlayer2);
-        this.SetPlayerScoreValuesToStoredValues();
-
-        this.UpdateTakeDisplayToStoredValues();
-        this.UpdateDetails();
-
-        GameViewManager.SetRemainingBallsDisplayValue(LocalStorageManager.GetAmountOfRemainingBallsOnTable());
+        this.UpdateView();        
         this.SetActivePlayer(LocalStorageManager.GetActivePlayer());
     }
 
@@ -187,8 +173,7 @@ class GameManager
         }
 
         LocalStorageManager.StoreAmountOfRemainingBallsOnTable(remainingBalls);
-        GameViewManager.SetRemainingBallsDisplayValue(remainingBalls);
-        this.UpdateDetails();
+        this.UpdateView();
     }
 
     public static ChangePlayerScore(playerLabel: string, delta: number)
@@ -201,15 +186,6 @@ class GameManager
         let playerScore = LocalStorageManager.GetCurrentScoreOfPlayer(playerLabel);
         playerScore += delta;
         LocalStorageManager.StoreCurrentScoreOfPlayer(playerLabel, playerScore);
-        this.SetPlayerScoreValuesToStoredValues();
-    }
-
-    public static SetPlayerScoreValuesToStoredValues()
-    {
-        const scoreOfPlayer1 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player1);
-        const scoreOfPlayer2 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player2);
-
-        GameViewManager.UpdatePlayerScoreDisplay(scoreOfPlayer1, scoreOfPlayer2);
     }
 
     public static ChangeAmountOfRemainingBalls(delta: number)
@@ -225,7 +201,7 @@ class GameManager
         this.SetRemainingBalls(remainingBalls);    
     }
 
-    public static UpdateDetails()
+    public static UpdateView()
     {
         const targetScore = LocalStorageManager.GetTargetScore();
         const scoreOfPlayer1 = LocalStorageManager.GetCurrentScoreOfPlayer(PlayerConstants.Player1);
@@ -236,24 +212,25 @@ class GameManager
         const takeOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
         const highestSeriesOfPlayer1 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player1);
         const highestSeriesOfPlayer2 = LocalStorageManager.GetHighestSeriesOfPlayer(PlayerConstants.Player2);
+        const takesOfPlayer1 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player1);
+        const takesOfPlayer2 = LocalStorageManager.GetTakeOfPlayer(PlayerConstants.Player2);
+        const remainingBallsOnTable = LocalStorageManager.GetAmountOfRemainingBallsOnTable();
 
         const remainingBallsOfPlayer1 = Math.max(0, targetScore - scoreOfPlayer1);
         const remainingBallsOfPlayer2 = Math.max(0, targetScore - scoreOfPlayer2);
         const averageOfPlayer1 = scoreOfPlayer1 / Math.max(takeOfPlayer1, 1);
         const averageOfPlayer2 = scoreOfPlayer2 / Math.max(takeOfPlayer2, 1);
+        const seriesOfPlayer1 = scoreOfPlayer1 - previousScoreOfPlayer1;
+        const seriesOfPlayer2 = scoreOfPlayer2 - previousScoreOfPlayer2;
 
         GameViewManager.UpdateRemainingBallsOfPlayerDisplay(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
         GameViewManager.UpdatePlayerAverageDisplay(averageOfPlayer1, averageOfPlayer2);
-        GameViewManager.UpdateHighestSeriesDisplay(highestSeriesOfPlayer1, highestSeriesOfPlayer2);
-
-        let series = 0;
-        if(LocalStorageManager.GetActivePlayer() === PlayerConstants.Player1){
-            series = scoreOfPlayer1 - previousScoreOfPlayer1;
-        }else{
-            series = scoreOfPlayer2 - previousScoreOfPlayer2;
-        }
-
-        GameViewManager.UpdateSeriesCounter(series);
+        GameViewManager.UpdateHighestSeriesDisplay(highestSeriesOfPlayer1, highestSeriesOfPlayer2);      
+        GameViewManager.UpdateTakeDisplay(takesOfPlayer1, takesOfPlayer2);
+        GameViewManager.UpdatePlayerScoreDisplay(scoreOfPlayer1, scoreOfPlayer2);
+        GameViewManager.SetRemainingBallsOnTableDisplayValue(remainingBallsOnTable);
+        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player1, seriesOfPlayer1);
+        GameViewManager.UpdateSeriesCounter(PlayerConstants.Player2, seriesOfPlayer2);
 
         this.CheckWinCondition(remainingBallsOfPlayer1, remainingBallsOfPlayer2);
     }
