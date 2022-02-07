@@ -10,5 +10,5 @@ class LocalStorageConstants
     public static readonly GameView = "game_view";
     public static readonly MenuView = "menu_view";
 
-    public static readonly StorageVersion = "0.3";
+    public static readonly StorageVersion = "0.4";
 }
