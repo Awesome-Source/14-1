@@ -22,6 +22,77 @@ var GameAction = (function () {
     }
     return GameAction;
 }());
+var GameLogic = (function () {
+    function GameLogic() {
+    }
+    GameLogic.SwitchPlayer = function (state) {
+        var activePlayerState = StateHelper.GetActivePlayerState(state);
+        var nextPlayerState = StateHelper.GetInactivePlayerState(state);
+        this.UpdateHighestSeriesIfNecessary(activePlayerState);
+        activePlayerState.PreviousScore = activePlayerState.CurrentScore;
+        nextPlayerState.Take += 1;
+        state.GameState.ActivePlayer = nextPlayerState.Label;
+    };
+    GameLogic.NewRack = function (state) {
+        var activePlayerState = StateHelper.GetActivePlayerState(state);
+        this.ChangePlayerScore(activePlayerState, 14);
+    };
+    GameLogic.ApplyFoulPoints = function (isBreakFoul, state) {
+        var activePlayerState = StateHelper.GetActivePlayerState(state);
+        activePlayerState.FoulCount += 1;
+        var negativePoints = -1;
+        if (isBreakFoul) {
+            negativePoints = -2;
+        }
+        if (activePlayerState.FoulCount % 3 === 0) {
+            negativePoints = -16;
+        }
+        activePlayerState.CurrentScore += negativePoints;
+        this.SwitchPlayer(state);
+    };
+    GameLogic.SetRemainingBalls = function (remainingBalls, state) {
+        var activePlayerState = StateHelper.GetActivePlayerState(state);
+        var remainingBallsBefore = state.GameState.RemainingBallsOnTable;
+        var delta = remainingBallsBefore - remainingBalls;
+        this.ChangePlayerScore(activePlayerState, delta);
+        if (remainingBalls === 1 || remainingBalls === 0) {
+            remainingBalls = 15;
+        }
+        state.GameState.RemainingBallsOnTable = remainingBalls;
+    };
+    GameLogic.ReplayActions = function (actions, state) {
+        for (var i = 0; i < actions.length; i++) {
+            var currentAction = actions[i];
+            switch (currentAction.Id) {
+                case ActionIds.Switch:
+                    GameLogic.SwitchPlayer(state);
+                    break;
+                case ActionIds.SetRemainingBalls:
+                    GameLogic.SetRemainingBalls(currentAction.Context, state);
+                    break;
+                case ActionIds.Foul:
+                    GameLogic.ApplyFoulPoints(currentAction.Context === 1, state);
+                    break;
+                case ActionIds.NewRack:
+                    GameLogic.NewRack(state);
+                    break;
+            }
+        }
+    };
+    GameLogic.ChangePlayerScore = function (activePlayerState, delta) {
+        if (delta > 0) {
+            activePlayerState.FoulCount = 0;
+        }
+        activePlayerState.CurrentScore += delta;
+    };
+    GameLogic.UpdateHighestSeriesIfNecessary = function (playerState) {
+        var currentSeries = playerState.CurrentScore - playerState.PreviousScore;
+        if (currentSeries > playerState.HighestSeries) {
+            playerState.HighestSeries = currentSeries;
+        }
+    };
+    return GameLogic;
+}());
 var GameManager = (function () {
     function GameManager() {
     }
@@ -61,19 +132,11 @@ var GameManager = (function () {
     };
     GameManager.SwitchPlayer = function () {
         var state = LocalStorageManager.GetState();
-        this.SwitchPlayerInternal(state);
+        GameLogic.SwitchPlayer(state);
         LocalStorageManager.StoreState(state);
         GameViewManager.HighlightActivePlayer(state.GameState.ActivePlayer);
         this.UpdateView();
         this.RecordAction(ActionIds.Switch, 0);
-    };
-    GameManager.SwitchPlayerInternal = function (state) {
-        var activePlayerState = StateHelper.GetActivePlayerState(state);
-        var nextPlayerState = StateHelper.GetInactivePlayerState(state);
-        this.UpdateHighestSeriesIfNecessary(activePlayerState);
-        activePlayerState.PreviousScore = activePlayerState.CurrentScore;
-        nextPlayerState.Take += 1;
-        state.GameState.ActivePlayer = nextPlayerState.Label;
     };
     GameManager.Undo = function () {
         var actions = LocalStorageManager.GetActions();
@@ -87,23 +150,7 @@ var GameManager = (function () {
     GameManager.ReplayActions = function (actions) {
         var stateBefore = LocalStorageManager.GetState();
         var state = this.CreateCompleteState(stateBefore.PlayerState1.Name, stateBefore.PlayerState2.Name, stateBefore.GameState.TargetScore);
-        for (var i = 0; i < actions.length; i++) {
-            var currentAction = actions[i];
-            switch (currentAction.Id) {
-                case ActionIds.Switch:
-                    this.SwitchPlayerInternal(state);
-                    break;
-                case ActionIds.SetRemainingBalls:
-                    this.SetRemainingBallsInternal(currentAction.Context, state);
-                    break;
-                case ActionIds.Foul:
-                    this.ApplyFoulPointsInternal(currentAction.Context === 1, state);
-                    break;
-                case ActionIds.NewRack:
-                    this.NewRackInternal(state);
-                    break;
-            }
-        }
+        GameLogic.ReplayActions(actions, state);
         LocalStorageManager.StoreState(state);
         GameViewManager.UnlockControls();
         this.UpdateView();
@@ -111,14 +158,10 @@ var GameManager = (function () {
     };
     GameManager.NewRack = function () {
         var state = LocalStorageManager.GetState();
-        this.NewRackInternal(state);
+        GameLogic.NewRack(state);
         LocalStorageManager.StoreState(state);
         this.UpdateView();
         this.RecordAction(ActionIds.NewRack, 0);
-    };
-    GameManager.NewRackInternal = function (state) {
-        var activePlayerState = StateHelper.GetActivePlayerState(state);
-        this.ChangePlayerScore(activePlayerState, 14);
     };
     GameManager.Foul = function () {
         var state = LocalStorageManager.GetState();
@@ -137,24 +180,11 @@ var GameManager = (function () {
     };
     GameManager.ApplyFoulPoints = function (isBreakFoul) {
         var state = LocalStorageManager.GetState();
-        this.ApplyFoulPointsInternal(isBreakFoul, state);
+        GameLogic.ApplyFoulPoints(isBreakFoul, state);
         LocalStorageManager.StoreState(state);
         GameViewManager.HighlightActivePlayer(state.GameState.ActivePlayer);
         this.UpdateView();
         this.RecordAction(ActionIds.Foul, isBreakFoul ? 1 : 0);
-    };
-    GameManager.ApplyFoulPointsInternal = function (isBreakFoul, state) {
-        var activePlayerState = StateHelper.GetActivePlayerState(state);
-        activePlayerState.FoulCount += 1;
-        var negativePoints = -1;
-        if (isBreakFoul) {
-            negativePoints = -2;
-        }
-        if (activePlayerState.FoulCount % 3 === 0) {
-            negativePoints = -16;
-        }
-        activePlayerState.CurrentScore += negativePoints;
-        this.SwitchPlayerInternal(state);
     };
     GameManager.ReloadStoredState = function () {
         if (!LocalStorageManager.IsStorageVersionUpToDate()) {
@@ -171,34 +201,12 @@ var GameManager = (function () {
         this.UpdateView();
         GameViewManager.HighlightActivePlayer(state.GameState.ActivePlayer);
     };
-    GameManager.UpdateHighestSeriesIfNecessary = function (playerState) {
-        var currentSeries = playerState.CurrentScore - playerState.PreviousScore;
-        if (currentSeries > playerState.HighestSeries) {
-            playerState.HighestSeries = currentSeries;
-        }
-    };
     GameManager.SetRemainingBalls = function (remainingBalls) {
         var state = LocalStorageManager.GetState();
-        this.SetRemainingBallsInternal(remainingBalls, state);
+        GameLogic.SetRemainingBalls(remainingBalls, state);
         LocalStorageManager.StoreState(state);
         this.UpdateView();
         this.RecordAction(ActionIds.SetRemainingBalls, remainingBalls);
-    };
-    GameManager.SetRemainingBallsInternal = function (remainingBalls, state) {
-        var activePlayerState = StateHelper.GetActivePlayerState(state);
-        var remainingBallsBefore = state.GameState.RemainingBallsOnTable;
-        var delta = remainingBallsBefore - remainingBalls;
-        this.ChangePlayerScore(activePlayerState, delta);
-        if (remainingBalls === 1 || remainingBalls === 0) {
-            remainingBalls = 15;
-        }
-        state.GameState.RemainingBallsOnTable = remainingBalls;
-    };
-    GameManager.ChangePlayerScore = function (activePlayerState, delta) {
-        if (delta > 0) {
-            activePlayerState.FoulCount = 0;
-        }
-        activePlayerState.CurrentScore += delta;
     };
     GameManager.ChangeAmountOfRemainingBalls = function (delta) {
         var state = LocalStorageManager.GetState();
