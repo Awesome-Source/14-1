@@ -1,35 +1,15 @@
 class LocalStorageManager
 {
-    public static StoreGameState(gameState: GameState)
+    public static StoreState(state: CompleteState)
     {
-        const json = JSON.stringify(gameState);
-        localStorage.setItem(LocalStorageConstants.GameStateKey, json);
+        localStorage.setItem(LocalStorageConstants.StateKey, JSON.stringify(state));
     }
 
-    public static GetGameState()
+    public static GetState()
     {
-        const json = localStorage.getItem(LocalStorageConstants.GameStateKey);
+        const json = localStorage.getItem(LocalStorageConstants.StateKey);
 
-        return <GameState> JSON.parse(json);
-    }
-
-    public static StoreActiveView(viewId: string)
-    {
-        localStorage.setItem(LocalStorageConstants.ActiveViewKey, viewId);
-    }
-
-    public static StorePlayerState(playerLabel: string, playerInfo: PlayerState)
-    {
-        const storageKey = playerLabel == PlayerConstants.Player1 ? LocalStorageConstants.Player1StateKey : LocalStorageConstants.Player2StateKey;
-        localStorage.setItem(storageKey, JSON.stringify(playerInfo));
-    }
-
-    public static GetPlayerState(playerLabel: string)
-    {
-        const storageKey = playerLabel == PlayerConstants.Player1 ? LocalStorageConstants.Player1StateKey : LocalStorageConstants.Player2StateKey;
-        const json = localStorage.getItem(storageKey);
-
-        return <PlayerState> JSON.parse(json);
+        return <CompleteState> JSON.parse(json);
     }
 
     public static GetActions()
@@ -43,6 +23,11 @@ class LocalStorageManager
     {
         const json = JSON.stringify(actions);
         localStorage.setItem(LocalStorageConstants.ActionsKey, json);
+    }
+
+    public static StoreActiveView(viewId: string)
+    {
+        localStorage.setItem(LocalStorageConstants.ActiveViewKey, viewId);
     }
 
     public static IsGameInProgress()
