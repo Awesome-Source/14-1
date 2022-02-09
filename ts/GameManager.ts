@@ -18,16 +18,21 @@ class GameManager
 
         GameViewManager.HighlightActivePlayer(PlayerConstants.Player1);  
         GameViewManager.UnlockControls();
-        const gameState = new GameState(PlayerConstants.Player1, startGameInfo.TargetScore, 15);
-        const player1State = new PlayerState(startGameInfo.NameOfPlayer1, PlayerConstants.Player1);
-        const player2State = new PlayerState(startGameInfo.NameOfPlayer2, PlayerConstants.Player2);
-        player1State.Take = 1;
-        const state = new CompleteState(gameState, player1State, player2State);
+        const state = this.CreateCompleteState(startGameInfo.NameOfPlayer1, startGameInfo.NameOfPlayer2, startGameInfo.TargetScore);
         LocalStorageManager.StoreState(state);
         LocalStorageManager.StoreActiveView(LocalStorageConstants.GameView);
 
         this.ReloadStoredState();
         this.ShowActiveView();
+    }
+
+    private static CreateCompleteState(nameOfPlayer1: string, nameOfPlayer2: string, targetScore: number)
+    {
+        const gameState = new GameState(PlayerConstants.Player1, targetScore, 15);
+        const player1State = new PlayerState(nameOfPlayer1, PlayerConstants.Player1);
+        const player2State = new PlayerState(nameOfPlayer2, PlayerConstants.Player2);
+        player1State.Take = 1;
+        return new CompleteState(gameState, player1State, player2State);
     }
 
     public static ShowActiveView()
@@ -70,6 +75,12 @@ class GameManager
     public static Undo()
     {
         const actions = LocalStorageManager.GetActions();
+
+        if(actions.length === 0)
+        {
+            return;
+        }
+
         actions.pop();
         this.ReplayActions(actions);
         LocalStorageManager.StoreActions(actions);
@@ -78,11 +89,7 @@ class GameManager
     private static ReplayActions(actions: GameAction[])
     {
         const stateBefore = LocalStorageManager.GetState();
-
-        const playerState1 = new PlayerState(stateBefore.PlayerState1.Name, PlayerConstants.Player1);
-        const playerState2 = new PlayerState(stateBefore.PlayerState2.Name, PlayerConstants.Player2);
-        const gameState = new GameState(PlayerConstants.Player1, stateBefore.GameState.TargetScore, 15);
-        const state = new CompleteState(gameState, playerState1, playerState2);
+        const state = this.CreateCompleteState(stateBefore.PlayerState1.Name, stateBefore.PlayerState2.Name, stateBefore.GameState.TargetScore);
 
         for(let i = 0; i < actions.length; i++)
         {
@@ -105,8 +112,9 @@ class GameManager
         }
 
         LocalStorageManager.StoreState(state);
+        GameViewManager.UnlockControls();
         this.UpdateView();
-        GameViewManager.HighlightActivePlayer(gameState.ActivePlayer);
+        GameViewManager.HighlightActivePlayer(state.GameState.ActivePlayer);
     }
 
     public static NewRack()

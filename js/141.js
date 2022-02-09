@@ -37,15 +37,18 @@ var GameManager = (function () {
         }
         GameViewManager.HighlightActivePlayer(PlayerConstants.Player1);
         GameViewManager.UnlockControls();
-        var gameState = new GameState(PlayerConstants.Player1, startGameInfo.TargetScore, 15);
-        var player1State = new PlayerState(startGameInfo.NameOfPlayer1, PlayerConstants.Player1);
-        var player2State = new PlayerState(startGameInfo.NameOfPlayer2, PlayerConstants.Player2);
-        player1State.Take = 1;
-        var state = new CompleteState(gameState, player1State, player2State);
+        var state = this.CreateCompleteState(startGameInfo.NameOfPlayer1, startGameInfo.NameOfPlayer2, startGameInfo.TargetScore);
         LocalStorageManager.StoreState(state);
         LocalStorageManager.StoreActiveView(LocalStorageConstants.GameView);
         this.ReloadStoredState();
         this.ShowActiveView();
+    };
+    GameManager.CreateCompleteState = function (nameOfPlayer1, nameOfPlayer2, targetScore) {
+        var gameState = new GameState(PlayerConstants.Player1, targetScore, 15);
+        var player1State = new PlayerState(nameOfPlayer1, PlayerConstants.Player1);
+        var player2State = new PlayerState(nameOfPlayer2, PlayerConstants.Player2);
+        player1State.Take = 1;
+        return new CompleteState(gameState, player1State, player2State);
     };
     GameManager.ShowActiveView = function () {
         var isGameInProgress = LocalStorageManager.IsGameInProgress();
@@ -74,16 +77,16 @@ var GameManager = (function () {
     };
     GameManager.Undo = function () {
         var actions = LocalStorageManager.GetActions();
+        if (actions.length === 0) {
+            return;
+        }
         actions.pop();
         this.ReplayActions(actions);
         LocalStorageManager.StoreActions(actions);
     };
     GameManager.ReplayActions = function (actions) {
         var stateBefore = LocalStorageManager.GetState();
-        var playerState1 = new PlayerState(stateBefore.PlayerState1.Name, PlayerConstants.Player1);
-        var playerState2 = new PlayerState(stateBefore.PlayerState2.Name, PlayerConstants.Player2);
-        var gameState = new GameState(PlayerConstants.Player1, stateBefore.GameState.TargetScore, 15);
-        var state = new CompleteState(gameState, playerState1, playerState2);
+        var state = this.CreateCompleteState(stateBefore.PlayerState1.Name, stateBefore.PlayerState2.Name, stateBefore.GameState.TargetScore);
         for (var i = 0; i < actions.length; i++) {
             var currentAction = actions[i];
             switch (currentAction.Id) {
@@ -102,8 +105,9 @@ var GameManager = (function () {
             }
         }
         LocalStorageManager.StoreState(state);
+        GameViewManager.UnlockControls();
         this.UpdateView();
-        GameViewManager.HighlightActivePlayer(gameState.ActivePlayer);
+        GameViewManager.HighlightActivePlayer(state.GameState.ActivePlayer);
     };
     GameManager.NewRack = function () {
         var state = LocalStorageManager.GetState();
