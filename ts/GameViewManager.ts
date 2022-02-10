@@ -46,16 +46,16 @@ class GameViewManager
 
     public static UpdatePlayerStateDetails(playerLabel: string, playerState: PlayerState)
     {
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "H: " + playerState.HighestSeries);
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_take", "A: " + playerState.Take);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "" + playerState.HighestSeries);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_take", "" + playerState.Take);
         HtmlUtils.SetInnerHtmlById(playerLabel + "_score", "" + playerState.CurrentScore);
     }
 
     public static UpdateCalculatedPlayerDetails(playerLabel: string, remainingBalls: number, average: number, series: number)
     {
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_remaining", "R: " + remainingBalls);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_remaining", "" + remainingBalls);
         HtmlUtils.SetInnerHtmlById(playerLabel + "_average", "Ø: " + average.toFixed(2));
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_series_counter", "Serie: " + series);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_series_counter", "" + series);
     }
 
     public static ShowGameView()
@@ -72,7 +72,7 @@ class GameViewManager
 
     public static ShowWinDialog(nameOfWinner: string)
     {
-        HtmlUtils.SetInnerHtmlById("win_dialog_text", nameOfWinner + " hat das Spiel gewonnen.")
+        HtmlUtils.SetInnerHtmlById("win_dialog_text", nameOfWinner + Localizer.GetTranslation("lkPlayerHasWonTheGame"))
         this.SetVisibilityOfElement("win_dialog", true);
         this.LockControls();
     }
@@ -104,30 +104,51 @@ class GameViewManager
 
         if(nameOfPlayer1 === "")
         {
-            alert("Bitte einen Namen für Spieler 1 eingeben.");
+            alert(Localizer.GetTranslation("lkMissingNamePlayer1"));
             return null;
         }
 
         if(nameOfPlayer2 === "")
         {
-            alert("Bitte einen Namen für Spieler 2 eingeben.");
+            alert(Localizer.GetTranslation("lkMissingNamePlayer2"));
             return null;
         }
 
         if(!Validator.IsNumeric(targetScoreString))
         {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            alert(Localizer.GetTranslation("lkInvalidTargetScore"));
             return null;
         }
 
         const targetScore = Number(targetScoreString);
 
-        if(targetScore < 20 || targetScore > 200)
+        if(targetScore < 20 || targetScore > 400)
         {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            alert(Localizer.GetTranslation("lkInvalidTargetScore"));
             return null;
         }
 
         return new StartGameInfo(nameOfPlayer1, nameOfPlayer2, targetScore);
+    }
+
+    public static ShowIncompatibleStorageVersionMessage()
+    {
+        alert(Localizer.GetTranslation("lkStorageVersionIncompatible"));
+    }
+
+    public static LocalizeView()
+    {
+        document.getElementById("menu_player1_name").setAttribute("placeholder", Localizer.GetTranslation("lkPlayer1"));
+        document.getElementById("menu_player2_name").setAttribute("placeholder", Localizer.GetTranslation("lkPlayer2"));
+        document.getElementById("menu_target_score").setAttribute("placeholder", Localizer.GetTranslation("lkTargetScore"));
+        HtmlUtils.SetInnerHtmlByClass("text-yes", Localizer.GetTranslation("lkYes"));
+        HtmlUtils.SetInnerHtmlByClass("text-no", Localizer.GetTranslation("lkNo"));
+        HtmlUtils.SetInnerHtmlByClass("text-ok", Localizer.GetTranslation("lkOk"));
+        HtmlUtils.SetInnerHtmlByClass("text-take", Localizer.GetTranslation("lkTake"));
+        HtmlUtils.SetInnerHtmlByClass("text-highest", Localizer.GetTranslation("lkHighestSeries"));
+        HtmlUtils.SetInnerHtmlByClass("text-remaining", Localizer.GetTranslation("lkRemainingBalls"));
+        HtmlUtils.SetInnerHtmlByClass("text-series", Localizer.GetTranslation("lkSeries"));
+        HtmlUtils.SetInnerHtmlById("abort_game_text", Localizer.GetTranslation("lkAbortGame"));
+        HtmlUtils.SetInnerHtmlById("break_foul_text", Localizer.GetTranslation("lkBreakFoul"));
     }
 }

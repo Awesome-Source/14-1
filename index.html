@@ -14,9 +14,9 @@
 
 			<div id="menu_view" class="w3-hide fill-area">
 				<div class="perfect-center w3-margin w3-xlarge">14:1</div>
-				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_player1_name" class="w3-input w3-round" type="text" placeholder="Spieler 1" /></div>
-				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_player2_name" class="w3-input w3-round" type="text" placeholder="Spieler 2" /></div>
-				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_target_score" class="w3-input w3-round" type="text" placeholder="Spiel auf" /></div>
+				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_player1_name" class="w3-input w3-round" type="text" /></div>
+				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_player2_name" class="w3-input w3-round" type="text" /></div>
+				<div class="perfect-center margin-8 padding-left-right-16 padding-top-bottom-8"><input id="menu_target_score" class="w3-input w3-round" type="text" /></div>
 				<div class="perfect-center margin-8">
 					<button class="padding-left-right-32" onclick="UserInputGateway.CreateNewGame()"><i class="fas fa-long-arrow-alt-right w3-xxlarge"></i></button>
 				</div>				
@@ -35,25 +35,47 @@
 					<div class="player-two-label perfect-center"><span id="player2_name"></span></div>
 					<div class="player-one-score perfect-center w3-xxlarge"><span id="player1_score"></span></div>
 					<div class="player-two-score perfect-center w3-xxlarge"><span id="player2_score"></span></div>
-					<div class="player-one-series-counter perfect-center w3-text-grey"><span id="player1_series_counter"></span></div>
-					<div class="player-two-series-counter perfect-center w3-text-grey"><span id="player2_series_counter"></span></div>
+					<div class="player-one-series-counter perfect-center w3-text-grey"><span class="text-series"></span><span id="player1_series_counter"></span></div>
+					<div class="player-two-series-counter perfect-center w3-text-grey"><span class="text-series"></span><span id="player2_series_counter"></span></div>
 	
 					<div class="player-one-details1 player-details w3-text-grey">
-						<span id="player1_take"></span>
-						<span id="player1_average"></span>
+						<div>
+							<span class="text-take"></span>
+							<span id="player1_take"></span>
+						</div>
+						<div>
+							<span id="player1_average"></span>
+						</div>
 					</div>
 					<div class="player-one-details2 player-details w3-text-grey">
-						<span id="player1_highest"></span>
-						<span id="player1_remaining"></span>
+						<div>
+							<span class="text-highest"></span>
+							<span id="player1_highest"></span>
+						</div>
+						<div>
+							<span class="text-remaining"></span>
+							<span id="player1_remaining"></span>
+						</div>
 					</div>
 	
 					<div class="player-two-details1 player-details w3-text-grey">
-						<span id="player2_take"></span>
-						<span id="player2_average"></span>
+						<div>
+							<span class="text-take"></span>
+							<span id="player2_take"></span>
+						</div>
+						<div>
+							<span id="player2_average"></span>
+						</div>
 					</div>
 					<div class="player-two-details2 player-details w3-text-grey">
-						<span id="player2_highest"></span>
-						<span id="player2_remaining"></span>
+						<div>
+							<span class="text-highest"></span>
+							<span id="player2_highest"></span>
+						</div>
+						<div>
+							<span class="text-remaining"></span>
+							<span id="player2_remaining"></span>
+						</div>
 					</div>
 	
 					<button class="switch-player perfect-center w3-xxlarge margin-8" onclick="UserInputGateway.SwitchPlayer()"><i class="fas fa-arrows-alt-h"></i></button>
@@ -97,11 +119,11 @@
 					<div class="fill-area perfect-center">
 						<div class="bg-modal-content w3-round w3-card margin8" onclick="UserInputGateway.StopPropagation(event)">
 							<div class="padding-all-8">
-								Soll das Spiel wirklich abgebrochen werden?
+								<span id="abort_game_text"></span>
 							</div>
 							<div class="padding-all-8 perfect-center">
-								<button class="margin-8 padding-all-8 w3-large dialog-button" onclick="UserInputGateway.ReturnToMenu(event)">Ja</button>
-								<button class="margin-8 padding-all-8 w3-large dialog-button" onclick="UserInputGateway.HideDialog('confirm_abort_dialog', event)">Nein</button>
+								<button class="margin-8 padding-all-8 w3-large dialog-button" onclick="UserInputGateway.ReturnToMenu(event)"><span class="text-yes"></span></button>
+								<button class="margin-8 padding-all-8 w3-large dialog-button" onclick="UserInputGateway.HideDialog('confirm_abort_dialog', event)"><span class="text-no"></span></button>
 							</div>
 						</div>
 					</div>	
@@ -111,11 +133,11 @@
 					<div class="fill-area perfect-center">
 						<div class="bg-modal-content w3-round w3-card margin-8">
 							<div class="padding-all-8">
-								War es ein Foul beim Break?
+								<span id="break_foul_text"></span>
 							</div>
 							<div class="padding-all-8 perfect-center">
-								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HandleBreakFoul()">Ja</button>
-								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HandleNormalFoul()">Nein</button>
+								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HandleBreakFoul()"><span class="text-yes"></span></button>
+								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HandleNormalFoul()"><span class="text-no"></span></button>
 							</div>							
 						</div>
 					</div>	
@@ -124,9 +146,11 @@
 				<div id="win_dialog" class="bg-modal" onclick="UserInputGateway.CaptureOutsideDialogClick('win_dialog')">
 					<div class="fill-area perfect-center">
 						<div class="bg-modal-content w3-round w3-card margin-8" onclick="UserInputGateway.StopPropagation(event)">
-							<div class="padding-all-8" id="win_dialog_text"></div>
+							<div class="padding-all-8">
+								<span id="win_dialog_text"></span>
+							</div>
 							<div class="perfect-center">
-								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HideDialog('win_dialog', event)">Ok</button>
+								<button class="margin-8 padding-all-16 w3-large" onclick="UserInputGateway.HideDialog('win_dialog', event)"><span class="text-ok"></span></button>
 							</div>							
 						</div>
 					</div>	

@@ -25,6 +25,12 @@ class HtmlUtils{
         const element = document.getElementById(elementId);
         element.innerHTML = innerHtml;
     }
+
+    public static SetInnerHtmlByClass(className: string, innerHtml: string)
+    {
+        const elements = document.querySelectorAll("." + className);
+        elements.forEach(e => e.innerHTML = innerHtml);
+    }
     
     public static GetInputFromElementWithId(elementId: string)
     {

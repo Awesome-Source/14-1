@@ -187,8 +187,9 @@ var GameManager = (function () {
         this.RecordAction(ActionIds.Foul, isBreakFoul ? 1 : 0);
     };
     GameManager.ReloadStoredState = function () {
+        GameViewManager.LocalizeView();
         if (!LocalStorageManager.IsStorageVersionUpToDate()) {
-            alert("Der gespeicherte Zustand ist nicht mit der aktuellen Version kompatibel.");
+            GameViewManager.ShowIncompatibleStorageVersionMessage();
             LocalStorageManager.Clear();
         }
         LocalStorageManager.StoreStorageVersion();
@@ -286,14 +287,14 @@ var GameViewManager = (function () {
         HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
     };
     GameViewManager.UpdatePlayerStateDetails = function (playerLabel, playerState) {
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "H: " + playerState.HighestSeries);
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_take", "A: " + playerState.Take);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "" + playerState.HighestSeries);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_take", "" + playerState.Take);
         HtmlUtils.SetInnerHtmlById(playerLabel + "_score", "" + playerState.CurrentScore);
     };
     GameViewManager.UpdateCalculatedPlayerDetails = function (playerLabel, remainingBalls, average, series) {
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_remaining", "R: " + remainingBalls);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_remaining", "" + remainingBalls);
         HtmlUtils.SetInnerHtmlById(playerLabel + "_average", "Ø: " + average.toFixed(2));
-        HtmlUtils.SetInnerHtmlById(playerLabel + "_series_counter", "Serie: " + series);
+        HtmlUtils.SetInnerHtmlById(playerLabel + "_series_counter", "" + series);
     };
     GameViewManager.ShowGameView = function () {
         HtmlUtils.ShowElementById("game_view");
@@ -304,7 +305,7 @@ var GameViewManager = (function () {
         HtmlUtils.HideElementById("game_view");
     };
     GameViewManager.ShowWinDialog = function (nameOfWinner) {
-        HtmlUtils.SetInnerHtmlById("win_dialog_text", nameOfWinner + " hat das Spiel gewonnen.");
+        HtmlUtils.SetInnerHtmlById("win_dialog_text", nameOfWinner + Localizer.GetTranslation("lkPlayerHasWonTheGame"));
         this.SetVisibilityOfElement("win_dialog", true);
         this.LockControls();
     };
@@ -325,23 +326,40 @@ var GameViewManager = (function () {
         var nameOfPlayer2 = HtmlUtils.GetInputFromElementWithId("menu_player2_name");
         var targetScoreString = HtmlUtils.GetInputFromElementWithId("menu_target_score");
         if (nameOfPlayer1 === "") {
-            alert("Bitte einen Namen für Spieler 1 eingeben.");
+            alert(Localizer.GetTranslation("lkMissingNamePlayer1"));
             return null;
         }
         if (nameOfPlayer2 === "") {
-            alert("Bitte einen Namen für Spieler 2 eingeben.");
+            alert(Localizer.GetTranslation("lkMissingNamePlayer2"));
             return null;
         }
         if (!Validator.IsNumeric(targetScoreString)) {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+            alert(Localizer.GetTranslation("lkInvalidTargetScore"));
             return null;
         }
         var targetScore = Number(targetScoreString);
-        if (targetScore < 20 || targetScore > 200) {
-            alert("Bitte eine gültige Zahl für die Zielpunktzahl eingeben.");
+        if (targetScore < 20 || targetScore > 400) {
+            alert(Localizer.GetTranslation("lkInvalidTargetScore"));
             return null;
         }
         return new StartGameInfo(nameOfPlayer1, nameOfPlayer2, targetScore);
+    };
+    GameViewManager.ShowIncompatibleStorageVersionMessage = function () {
+        alert(Localizer.GetTranslation("lkStorageVersionIncompatible"));
+    };
+    GameViewManager.LocalizeView = function () {
+        document.getElementById("menu_player1_name").setAttribute("placeholder", Localizer.GetTranslation("lkPlayer1"));
+        document.getElementById("menu_player2_name").setAttribute("placeholder", Localizer.GetTranslation("lkPlayer2"));
+        document.getElementById("menu_target_score").setAttribute("placeholder", Localizer.GetTranslation("lkTargetScore"));
+        HtmlUtils.SetInnerHtmlByClass("text-yes", Localizer.GetTranslation("lkYes"));
+        HtmlUtils.SetInnerHtmlByClass("text-no", Localizer.GetTranslation("lkNo"));
+        HtmlUtils.SetInnerHtmlByClass("text-ok", Localizer.GetTranslation("lkOk"));
+        HtmlUtils.SetInnerHtmlByClass("text-take", Localizer.GetTranslation("lkTake"));
+        HtmlUtils.SetInnerHtmlByClass("text-highest", Localizer.GetTranslation("lkHighestSeries"));
+        HtmlUtils.SetInnerHtmlByClass("text-remaining", Localizer.GetTranslation("lkRemainingBalls"));
+        HtmlUtils.SetInnerHtmlByClass("text-series", Localizer.GetTranslation("lkSeries"));
+        HtmlUtils.SetInnerHtmlById("abort_game_text", Localizer.GetTranslation("lkAbortGame"));
+        HtmlUtils.SetInnerHtmlById("break_foul_text", Localizer.GetTranslation("lkBreakFoul"));
     };
     return GameViewManager;
 }());
@@ -365,6 +383,10 @@ var HtmlUtils = (function () {
     HtmlUtils.SetInnerHtmlById = function (elementId, innerHtml) {
         var element = document.getElementById(elementId);
         element.innerHTML = innerHtml;
+    };
+    HtmlUtils.SetInnerHtmlByClass = function (className, innerHtml) {
+        var elements = document.querySelectorAll("." + className);
+        elements.forEach(function (e) { return e.innerHTML = innerHtml; });
     };
     HtmlUtils.GetInputFromElementWithId = function (elementId) {
         var element = document.getElementById(elementId);
@@ -426,6 +448,61 @@ var LocalStorageManager = (function () {
         localStorage.clear();
     };
     return LocalStorageManager;
+}());
+var Localizer = (function () {
+    function Localizer() {
+    }
+    Localizer.GetTranslation = function (languageKey) {
+        if (/^de\b/.test(navigator.language)) {
+            return this.GetTranslationFromDictionary(languageKey, this._germanTranslationByLanguageKey);
+        }
+        return this.GetTranslationFromDictionary(languageKey, this._englishTranslationByLanguageKey);
+    };
+    Localizer.GetTranslationFromDictionary = function (languageKey, dictionary) {
+        if (languageKey in dictionary) {
+            return dictionary[languageKey];
+        }
+        return languageKey;
+    };
+    Localizer._germanTranslationByLanguageKey = {
+        "lkPlayer1": "Spieler 1",
+        "lkPlayer2": "Spieler 2",
+        "lkTargetScore": "Spiel auf",
+        "lkYes": "Ja",
+        "lkNo": "Nein",
+        "lkOk": "Ok",
+        "lkHighestSeries": "H: ",
+        "lkTake": "A: ",
+        "lkRemainingBalls": "R: ",
+        "lkSeries": "Serie: ",
+        "lkMissingNamePlayer1": "Bitte einen Namen für Spieler 1 eingeben.",
+        "lkMissingNamePlayer2": "Bitte einen Namen für Spieler 2 eingeben.",
+        "lkInvalidTargetScore": "Bitte eine gültige Zahl für die Zielpunktzahl eingeben.",
+        "lkPlayerHasWonTheGame": " hat das Spiel gewonnen.",
+        "lkAbortGame": "Soll das Spiel wirklich abgebrochen werden?",
+        "lkBreakFoul": "War es ein Foul beim Break?",
+        "lkStorageVersionIncompatible": "Der gespeicherte Zustand ist nicht mit der neuen Version kompatibel und wird zurückgesetzt."
+    };
+    Localizer._englishTranslationByLanguageKey = {
+        "lkPlayer1": "Player 1",
+        "lkPlayer2": "Player 2",
+        "lkTargetScore": "Target score",
+        "lkYes": "Yes",
+        "lkNo": "No",
+        "lkOk": "Ok",
+        "lkHighestSeries": "H: ",
+        "lkTake": "T: ",
+        "lkRemainingBalls": "R: ",
+        "lkSeries": "Series: ",
+        "lkMissingNamePlayer1": "Please enter a name for player 1.",
+        "lkMissingNamePlayer2": "Please enter a name for player 2.",
+        "lkInvalidTargetScore": "Please enter a valid target score.",
+        "lkPlayerHasWonTheGame": " has won the game.",
+        "lkAbortGame": "Do you really want to abort the game?",
+        "lkBreakFoul": "Was it a break foul?",
+        "lkStorageVersionIncompatible": "The saved state is not compatible with the new version and will be reset."
+    };
+    return Localizer;
 }());
 var PlayerConstants = (function () {
     function PlayerConstants() {
