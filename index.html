@@ -8,6 +8,14 @@
 	    <link rel="stylesheet" href="css/fa.css">
 		<link rel="stylesheet" href="css/main.css">
 		<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+		<script>
+			let vh = window.innerHeight;
+			document.documentElement.style.setProperty('--vh', `${vh}px`);
+			window.addEventListener('resize', () => {
+  				let vh = window.innerHeight;
+  				document.documentElement.style.setProperty('--vh', `${vh}px`);
+			});
+		</script>
 	</head>
 	<body class="fill-area perfect-center">
 		<div class="content-wrapper fill-area">
