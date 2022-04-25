@@ -35,7 +35,9 @@ var GameLogic = (function () {
     };
     GameLogic.NewRack = function (state) {
         var activePlayerState = StateHelper.GetActivePlayerState(state);
-        this.ChangePlayerScore(activePlayerState, 14);
+        var remainingBallsUntilReRack = state.GameState.RemainingBallsOnTable - 1;
+        this.ChangePlayerScore(activePlayerState, remainingBallsUntilReRack);
+        state.GameState.RemainingBallsOnTable = 15;
     };
     GameLogic.ApplyFoulPoints = function (isBreakFoul, state) {
         var activePlayerState = StateHelper.GetActivePlayerState(state);

@@ -14,7 +14,9 @@ class GameLogic
     public static NewRack(state: CompleteState)
     {
         const activePlayerState = StateHelper.GetActivePlayerState(state);
-        this.ChangePlayerScore(activePlayerState, 14);
+        const remainingBallsUntilReRack = state.GameState.RemainingBallsOnTable - 1;
+        this.ChangePlayerScore(activePlayerState, remainingBallsUntilReRack);
+        state.GameState.RemainingBallsOnTable = 15;
     }
 
     public static ApplyFoulPoints(isBreakFoul: boolean, state: CompleteState)
