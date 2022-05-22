@@ -22,6 +22,14 @@ var GameAction = (function () {
     }
     return GameAction;
 }());
+var GameHistoryEntry = (function () {
+    function GameHistoryEntry(Take, CurrentScoreOfPlayer1, CurrentScoreOfPlayer2) {
+        this.Take = Take;
+        this.CurrentScoreOfPlayer1 = CurrentScoreOfPlayer1;
+        this.CurrentScoreOfPlayer2 = CurrentScoreOfPlayer2;
+    }
+    return GameHistoryEntry;
+}());
 var GameLogic = (function () {
     function GameLogic() {
     }
@@ -80,6 +88,37 @@ var GameLogic = (function () {
                     break;
             }
         }
+    };
+    GameLogic.BuildHistory = function (actions, state) {
+        var historyEntries = [];
+        for (var i = 0; i < actions.length; i++) {
+            var currentAction = actions[i];
+            switch (currentAction.Id) {
+                case ActionIds.Switch:
+                    GameLogic.SwitchPlayer(state);
+                    break;
+                case ActionIds.SetRemainingBalls:
+                    GameLogic.SetRemainingBalls(currentAction.Context, state);
+                    break;
+                case ActionIds.Foul:
+                    GameLogic.ApplyFoulPoints(currentAction.Context === 1, state);
+                    break;
+                case ActionIds.NewRack:
+                    GameLogic.NewRack(state);
+                    break;
+            }
+            var activePlayerState = StateHelper.GetActivePlayerState(state);
+            if (historyEntries.length === activePlayerState.Take - 1) {
+                historyEntries.push(new GameHistoryEntry(activePlayerState.Take, "-", "-"));
+            }
+            if (activePlayerState.Label === PlayerConstants.Player1) {
+                historyEntries[activePlayerState.Take - 1].CurrentScoreOfPlayer1 = "" + activePlayerState.CurrentScore;
+            }
+            else {
+                historyEntries[activePlayerState.Take - 1].CurrentScoreOfPlayer2 = "" + activePlayerState.CurrentScore;
+            }
+        }
+        return historyEntries;
     };
     GameLogic.ChangePlayerScore = function (activePlayerState, delta) {
         if (delta > 0) {
@@ -243,31 +282,18 @@ var GameManager = (function () {
     };
     GameManager.FillDetailsDialog = function () {
         GameViewManager.ClearDetailsTable();
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
-        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        var actions = LocalStorageManager.GetActions();
+        if (actions.length === 0) {
+            GameViewManager.AddDetailsTableRow(1, "0", "-");
+            return;
+        }
+        var stateBefore = LocalStorageManager.GetState();
+        var state = this.CreateCompleteState(stateBefore.PlayerState1.Name, stateBefore.PlayerState2.Name, stateBefore.GameState.TargetScore);
+        var historyEntries = GameLogic.BuildHistory(actions, state);
+        for (var i = 0; i < historyEntries.length; i++) {
+            var entry = historyEntries[i];
+            GameViewManager.AddDetailsTableRow(entry.Take, entry.CurrentScoreOfPlayer1, entry.CurrentScoreOfPlayer2);
+        }
     };
     return GameManager;
 }());
@@ -399,8 +425,8 @@ var GameViewManager = (function () {
         var player1CurrenSeriesCellElement = document.createElement("td");
         var player2CurrenSeriesCellElement = document.createElement("td");
         takeCellElement.innerText = "" + take;
-        player1CurrenSeriesCellElement.innerText = "" + player1CurrentSeries;
-        player2CurrenSeriesCellElement.innerText = "" + player2CurrentSeries;
+        player1CurrenSeriesCellElement.innerText = player1CurrentSeries;
+        player2CurrenSeriesCellElement.innerText = player2CurrentSeries;
         tableRowElement.appendChild(takeCellElement);
         tableRowElement.appendChild(player1CurrenSeriesCellElement);
         tableRowElement.appendChild(player2CurrenSeriesCellElement);

@@ -80,6 +80,47 @@ class GameLogic
         }
     }
 
+    public static BuildHistory(actions: GameAction[], state: CompleteState)
+    {
+        const historyEntries: GameHistoryEntry[] = [];
+
+        for(let i = 0; i < actions.length; i++)
+        {
+            const currentAction = actions[i];
+            switch(currentAction.Id)
+            {
+                case ActionIds.Switch:
+                    GameLogic.SwitchPlayer(state);
+                    break;
+                case ActionIds.SetRemainingBalls:
+                    GameLogic.SetRemainingBalls(currentAction.Context, state);
+                    break;
+                case ActionIds.Foul:
+                    GameLogic.ApplyFoulPoints(currentAction.Context === 1, state);
+                    break;
+                case ActionIds.NewRack:
+                    GameLogic.NewRack(state);
+                    break;
+            }
+
+            const activePlayerState = StateHelper.GetActivePlayerState(state);
+            if(historyEntries.length === activePlayerState.Take - 1)
+            {
+                historyEntries.push(new GameHistoryEntry(activePlayerState.Take, "-", "-"));
+            }
+
+            if(activePlayerState.Label === PlayerConstants.Player1)
+            {
+                historyEntries[activePlayerState.Take - 1].CurrentScoreOfPlayer1 = "" + activePlayerState.CurrentScore;
+            }else{
+                historyEntries[activePlayerState.Take - 1].CurrentScoreOfPlayer2 = "" + activePlayerState.CurrentScore;
+            }
+
+        }
+
+        return historyEntries;
+    }
+
     private static ChangePlayerScore(activePlayerState: PlayerState, delta: number)
     {
         if(delta > 0)

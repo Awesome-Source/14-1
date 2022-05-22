@@ -214,30 +214,22 @@ class GameManager
         
         GameViewManager.ClearDetailsTable();
 
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
-        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        const actions = LocalStorageManager.GetActions();
+
+        if(actions.length === 0)
+        {
+            GameViewManager.AddDetailsTableRow(1, "0", "-");
+            return;
+        }
+
+        const stateBefore = LocalStorageManager.GetState();
+        const state = this.CreateCompleteState(stateBefore.PlayerState1.Name, stateBefore.PlayerState2.Name, stateBefore.GameState.TargetScore);
+        const historyEntries = GameLogic.BuildHistory(actions, state);
+
+        for(let i = 0; i < historyEntries.length; i++)
+        {
+            const entry = historyEntries[i];
+            GameViewManager.AddDetailsTableRow(entry.Take, entry.CurrentScoreOfPlayer1, entry.CurrentScoreOfPlayer2);
+        }
     }
 }
