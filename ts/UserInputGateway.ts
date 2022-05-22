@@ -5,6 +5,12 @@ class UserInputGateway{
         GameViewManager.SetVisibilityOfElement(dialogId, true);
     }
 
+    public static ShowDetailsDialog()
+    {
+        GameManager.FillDetailsDialog();
+        UserInputGateway.ShowDialog("details_dialog");
+    }
+
     public static HideDialog(dialogId: string, event: Event)
     {
         HtmlUtils.StopPropagation(event);

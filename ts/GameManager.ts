@@ -209,4 +209,35 @@ class GameManager
         actions.push(new GameAction(actionId, actionContext));
         LocalStorageManager.StoreActions(actions);
     }
+
+    public static FillDetailsDialog() {
+        
+        GameViewManager.ClearDetailsTable();
+
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+        GameViewManager.AddDetailsTableRow(1, "4", "7");
+    }
 }

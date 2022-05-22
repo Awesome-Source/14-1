@@ -241,6 +241,34 @@ var GameManager = (function () {
         actions.push(new GameAction(actionId, actionContext));
         LocalStorageManager.StoreActions(actions);
     };
+    GameManager.FillDetailsDialog = function () {
+        GameViewManager.ClearDetailsTable();
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+        GameViewManager.AddDetailsTableRow(1, 4, 7);
+    };
     return GameManager;
 }());
 var GameState = (function () {
@@ -285,8 +313,8 @@ var GameViewManager = (function () {
         HtmlUtils.SetInnerHtmlById("remaining_balls_display", "" + value);
     };
     GameViewManager.UpdatePlayerNames = function (nameOfPlayer1, nameOfPlayer2) {
-        HtmlUtils.SetInnerHtmlById("player1_name", nameOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
+        HtmlUtils.SetInnerHtmlByClass("text-player1-name", nameOfPlayer1);
+        HtmlUtils.SetInnerHtmlByClass("text-player2-name", nameOfPlayer2);
     };
     GameViewManager.UpdatePlayerStateDetails = function (playerLabel, playerState) {
         HtmlUtils.SetInnerHtmlById(playerLabel + "_highest", "" + playerState.HighestSeries);
@@ -356,12 +384,33 @@ var GameViewManager = (function () {
         HtmlUtils.SetInnerHtmlByClass("text-yes", Localizer.GetTranslation("lkYes"));
         HtmlUtils.SetInnerHtmlByClass("text-no", Localizer.GetTranslation("lkNo"));
         HtmlUtils.SetInnerHtmlByClass("text-ok", Localizer.GetTranslation("lkOk"));
+        HtmlUtils.SetInnerHtmlByClass("text-take-abbreviation", Localizer.GetTranslation("lkTakeAbbreviation"));
         HtmlUtils.SetInnerHtmlByClass("text-take", Localizer.GetTranslation("lkTake"));
         HtmlUtils.SetInnerHtmlByClass("text-highest", Localizer.GetTranslation("lkHighestSeries"));
         HtmlUtils.SetInnerHtmlByClass("text-remaining", Localizer.GetTranslation("lkRemainingBalls"));
         HtmlUtils.SetInnerHtmlByClass("text-series", Localizer.GetTranslation("lkSeries"));
         HtmlUtils.SetInnerHtmlById("abort_game_text", Localizer.GetTranslation("lkAbortGame"));
         HtmlUtils.SetInnerHtmlById("break_foul_text", Localizer.GetTranslation("lkBreakFoul"));
+    };
+    GameViewManager.AddDetailsTableRow = function (take, player1CurrentSeries, player2CurrentSeries) {
+        var tbodyElement = document.getElementById("detailslist_tbdoy");
+        var tableRowElement = document.createElement("tr");
+        var takeCellElement = document.createElement("td");
+        var player1CurrenSeriesCellElement = document.createElement("td");
+        var player2CurrenSeriesCellElement = document.createElement("td");
+        takeCellElement.innerText = "" + take;
+        player1CurrenSeriesCellElement.innerText = "" + player1CurrentSeries;
+        player2CurrenSeriesCellElement.innerText = "" + player2CurrentSeries;
+        tableRowElement.appendChild(takeCellElement);
+        tableRowElement.appendChild(player1CurrenSeriesCellElement);
+        tableRowElement.appendChild(player2CurrenSeriesCellElement);
+        tbodyElement.appendChild(tableRowElement);
+    };
+    GameViewManager.ClearDetailsTable = function () {
+        var element = document.getElementById("detailslist_tbdoy");
+        while (element.firstChild) {
+            element.removeChild(element.lastChild);
+        }
     };
     return GameViewManager;
 }());
@@ -474,7 +523,8 @@ var Localizer = (function () {
         "lkNo": "Nein",
         "lkOk": "Ok",
         "lkHighestSeries": "H:",
-        "lkTake": "A:",
+        "lkTake": "Aufnahme",
+        "lkTakeAbbreviation": "A:",
         "lkRemainingBalls": "R:",
         "lkSeries": "Serie:",
         "lkMissingNamePlayer1": "Bitte einen Namen für Spieler 1 eingeben.",
@@ -493,7 +543,8 @@ var Localizer = (function () {
         "lkNo": "No",
         "lkOk": "Ok",
         "lkHighestSeries": "H:",
-        "lkTake": "T:",
+        "lkTake": "Take",
+        "lkTakeAbbreviation": "T:",
         "lkRemainingBalls": "R:",
         "lkSeries": "Series:",
         "lkMissingNamePlayer1": "Please enter a name for player 1.",
@@ -549,6 +600,10 @@ var UserInputGateway = (function () {
     }
     UserInputGateway.ShowDialog = function (dialogId) {
         GameViewManager.SetVisibilityOfElement(dialogId, true);
+    };
+    UserInputGateway.ShowDetailsDialog = function () {
+        GameManager.FillDetailsDialog();
+        UserInputGateway.ShowDialog("details_dialog");
     };
     UserInputGateway.HideDialog = function (dialogId, event) {
         HtmlUtils.StopPropagation(event);

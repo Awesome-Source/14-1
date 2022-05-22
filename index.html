@@ -53,8 +53,8 @@
 						<span style="visibility: hidden;">flex</span>
 					</div>
 	
-					<div class="player-one-label perfect-center"><span id="player1_name"></span></div>
-					<div class="player-two-label perfect-center"><span id="player2_name"></span></div>
+					<div class="player-one-label perfect-center"><span id="player1_name" class="text-player1-name"></span></div>
+					<div class="player-two-label perfect-center"><span id="player2_name" class="text-player1-name"></span></div>
 					<div class="player-one-score perfect-center w3-xxlarge"><span id="player1_score"></span></div>
 					<div class="player-two-score perfect-center w3-xxlarge"><span id="player2_score"></span></div>
 					<div class="player-one-series-counter perfect-center w3-text-grey"><span class="text-series"></span>&nbsp;<span id="player1_series_counter"></span></div>
@@ -62,7 +62,7 @@
 	
 					<div class="player-one-details1 player-details w3-text-grey">
 						<div>
-							<span class="text-take"></span>&nbsp;<span id="player1_take"></span>
+							<span class="text-take-abbreviation"></span>&nbsp;<span id="player1_take"></span>
 						</div>
 						<div>
 							<span id="player1_average"></span>
@@ -79,7 +79,7 @@
 	
 					<div class="player-two-details1 player-details w3-text-grey">
 						<div>
-							<span class="text-take"></span>&nbsp;<span id="player2_take"></span>
+							<span class="text-take-abbreviation"></span>&nbsp;<span id="player2_take"></span>
 						</div>
 						<div>
 							<span id="player2_average"></span>
@@ -105,7 +105,7 @@
 					<button class="minus perfect-center w3-xlarge margin-8" onclick="UserInputGateway.DecrementOne()"><i class="fas fa-minus"></i></button>
 					<button class="plus perfect-center w3-xlarge margin-8" onclick="UserInputGateway.IncrementOne()"><i class="fas fa-plus"></i></button>
 					<button class="foul perfect-center w3-xlarge margin-8" onclick="UserInputGateway.Foul()"><i class="fas fa-bolt"></i></button>
-					<button class="detailslist perfect-center w3-xlarge margin-8" onclick="UserInputGateway.ShowDialog('details_dialog')" disabled><i class="fas fa-bars"></i></button>
+					<button class="detailslist perfect-center w3-xlarge margin-8" onclick="UserInputGateway.ShowDetailsDialog()"><i class="fas fa-bars"></i></button>
 				</div>
 			
 				<div id="remaining_balls_selection_dialog" class="bg-modal" onclick="UserInputGateway.CaptureOutsideDialogClick('remaining_balls_selection_dialog')">
@@ -173,7 +173,25 @@
 				</div>
 
 				<div id="details_dialog" class="bg-modal" onclick="UserInputGateway.CaptureOutsideDialogClick('details_dialog')">
-
+					<div class="fill-area perfect-center">
+						<div class="bg-modal-content w3-round w3-card margin-8" onclick="UserInputGateway.StopPropagation(event)">
+							<div class="padding-all-8 details-dialog-content">
+								<table class="w3-table w3-striped w3-centered detailslist_table">
+									<thead>
+										<tr class="w3-text-blue">
+											<th><span class="text-take"></span></th>
+											<th><span class="text-player1-name"></span></th>
+											<th><span class="text-player2-name"></span></th>
+										</tr>
+									</thead>
+									<tbody id="detailslist_tbdoy">
+										<tr>
+										</tr>
+									</tbody>
+								</table>
+							</div>							
+						</div>
+					</div>	
 				</div>
 			</div>			
 		</div>

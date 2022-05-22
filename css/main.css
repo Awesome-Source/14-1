@@ -339,6 +339,21 @@ grid-row: 6 / 7;
 	align-items: center;
 }
 
+.detailslist_table{
+	table-layout: fixed;
+}
+
+.details-dialog-content{
+	overflow: auto;
+	max-width: 400px;
+}
+
+@media (min-width: 450px) {
+	.details-dialog-content{
+		min-width: 400px;
+	}	
+}
+
 @media (min-width: 1000px) {
 	.content-wrapper{
 		  max-width: 1000px;
@@ -346,4 +361,9 @@ grid-row: 6 / 7;
 		  box-shadow:0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12);
 		  border-radius:4px;
 	}
+
+	.details-dialog-content{
+		max-height: 450px;
+	}
 }
+

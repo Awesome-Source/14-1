@@ -40,8 +40,8 @@ class GameViewManager
 
     public static UpdatePlayerNames(nameOfPlayer1: string, nameOfPlayer2: string)
     {
-        HtmlUtils.SetInnerHtmlById("player1_name", nameOfPlayer1);
-        HtmlUtils.SetInnerHtmlById("player2_name", nameOfPlayer2);
+        HtmlUtils.SetInnerHtmlByClass("text-player1-name", nameOfPlayer1);
+        HtmlUtils.SetInnerHtmlByClass("text-player2-name", nameOfPlayer2);
     }
 
     public static UpdatePlayerStateDetails(playerLabel: string, playerState: PlayerState)
@@ -144,11 +144,36 @@ class GameViewManager
         HtmlUtils.SetInnerHtmlByClass("text-yes", Localizer.GetTranslation("lkYes"));
         HtmlUtils.SetInnerHtmlByClass("text-no", Localizer.GetTranslation("lkNo"));
         HtmlUtils.SetInnerHtmlByClass("text-ok", Localizer.GetTranslation("lkOk"));
+        HtmlUtils.SetInnerHtmlByClass("text-take-abbreviation", Localizer.GetTranslation("lkTakeAbbreviation"));
         HtmlUtils.SetInnerHtmlByClass("text-take", Localizer.GetTranslation("lkTake"));
         HtmlUtils.SetInnerHtmlByClass("text-highest", Localizer.GetTranslation("lkHighestSeries"));
         HtmlUtils.SetInnerHtmlByClass("text-remaining", Localizer.GetTranslation("lkRemainingBalls"));
         HtmlUtils.SetInnerHtmlByClass("text-series", Localizer.GetTranslation("lkSeries"));
         HtmlUtils.SetInnerHtmlById("abort_game_text", Localizer.GetTranslation("lkAbortGame"));
         HtmlUtils.SetInnerHtmlById("break_foul_text", Localizer.GetTranslation("lkBreakFoul"));
+    }
+
+    public static AddDetailsTableRow(take: number, player1CurrentSeries: string, player2CurrentSeries: string) {
+        const tbodyElement = document.getElementById("detailslist_tbdoy");
+        const tableRowElement = document.createElement("tr");
+        const takeCellElement = document.createElement("td");
+        const player1CurrenSeriesCellElement = document.createElement("td");
+        const player2CurrenSeriesCellElement = document.createElement("td");
+
+        takeCellElement.innerText = "" + take;
+        player1CurrenSeriesCellElement.innerText = player1CurrentSeries;
+        player2CurrenSeriesCellElement.innerText = player2CurrentSeries;
+
+        tableRowElement.appendChild(takeCellElement);
+        tableRowElement.appendChild(player1CurrenSeriesCellElement);
+        tableRowElement.appendChild(player2CurrenSeriesCellElement);
+        tbodyElement.appendChild(tableRowElement);
+    }
+
+    public static ClearDetailsTable() {
+        const element = document.getElementById("detailslist_tbdoy");
+        while (element.firstChild) {
+            element.removeChild(element.lastChild);
+          }
     }
 }
